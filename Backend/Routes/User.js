@@ -11,6 +11,7 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const mongoose=require('mongoose');
 const {body, validationResult} = require('express-validator');
+const fetchuser = require('../Middlewares/fetchuser');
 
 const JWT_SECRET = '@insha@is@a@good@girl@';
 
@@ -275,6 +276,31 @@ router.post('/ChangePassword/:email', [
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred in Code Validation");
+    }
+});
+
+router.get('/GetUser/:key', fetchuser, async (req, res) => {
+    let success = false;
+    const user_id = req.user.id;
+    const ObjectId = mongoose.Types.ObjectId;
+    const id = req.params.key;
+
+    try {
+        const user = await User.findOne({ _id: new ObjectId(user_id) });
+
+        if (!user) {
+            return res.status(400).json({ success, error: "user not found" });
+        }
+
+        const user_data = await User.findOne({ _id: new ObjectId(id) });
+
+        success = true;
+
+        res.json({ success, user_data });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("An error occurred while fetching course with learning post.");
     }
 });
 

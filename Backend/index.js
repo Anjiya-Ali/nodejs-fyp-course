@@ -17,6 +17,9 @@ app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+app.use(express.static('public'));
+app.use('/Uploads', express.static('Uploads'));
+
 app.use('/api/Codes',require('./Routes/Code'))
 app.use('/api/User',require('./Routes/User'))
 app.use('/api/Student',require('./Routes/Student'))
@@ -29,6 +32,6 @@ app.use('/api/TeacherQuizzes',require('./Routes/TeacherQuizzes'))
 app.use('/api/CourseEnrollment',require('./Routes/CourseEnrollment'))
 app.use('/api/CourseProgression',require('./Routes/CourseProgression'))
 
-app.listen(port, () => {
+app.listen(port, '192.168.244.190',() => {
   console.log(`Example app listening on port ${port}`)
 })

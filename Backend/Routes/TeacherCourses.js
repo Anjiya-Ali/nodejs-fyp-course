@@ -6,6 +6,7 @@ const LearningPosts = require('../Models/LearningPosts');
 const Courses = require('../Models/Courses');
 const multer = require('multer');
 const fetchuser = require('../Middlewares/fetchuser');
+const date = Date.now();
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -13,7 +14,7 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}_${file.originalname}`);
+        cb(null, `${date}_${file.originalname}`);
     }
 });
 
@@ -39,7 +40,7 @@ router.post('/CreateCourse', fetchuser, upload.single('featured_image'), async (
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const uniqueFilename = `${Date.now()}_${req.file.originalname}`;
+        const uniqueFilename = `${date}_${req.file.originalname}`;
 
         //creation of learning post
 
