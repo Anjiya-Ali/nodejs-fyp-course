@@ -82,14 +82,13 @@ router.get('/GetMyCourses', fetchuser, async (req, res) => {
         }
 
         const mycourses = await UserItems.find({ item_type: 'course', student_id: new ObjectId(student_profile_id) }).lean().exec();
-
         const courses = await Courses.find({}).lean().exec();
         const learningPosts = await LearningPosts.find({
             _id: { $in: courses.map(course => course.post_id) }
         }).lean().exec();
 
         const coursesWithLearningPosts = courses
-            .filter(course => mycourses.some(item => item.item_id.equals(course.post_id)))
+            .filter(course => mycourses.some(item => item.item_id.equals(course._id)))
                 .map(course => {
                 const matchingLearningPost = learningPosts.find(post => post._id.equals(course.post_id));
                     return matchingLearningPost ? {
