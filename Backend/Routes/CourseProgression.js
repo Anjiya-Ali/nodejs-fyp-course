@@ -167,7 +167,7 @@ router.get('/CalculateCourseCompletion/:key', fetchuser, async (req, res) => {
                 const topics = await LessonItems.find({ lesson_id: new ObjectId(lesson._id) });
                 const topicIds = await LearningPosts.find({
                     _id: { $in: topics.map(topic => topic.post_id) },
-                    post_type: 'topic',
+                    post_type: { $in: ['topic', 'quiz'] },
                 }).lean().exec().then((items) => items.map((item) => item._id));
 
                 return topicIds.map((id) => id.toString());
@@ -180,7 +180,6 @@ router.get('/CalculateCourseCompletion/:key', fetchuser, async (req, res) => {
         const completedTopics = await UserItems.find({
             student_id: new ObjectId(student_profile_id),
             item_id: { $in: allTopics.map(id => new ObjectId(id)) },
-            item_type: 'topic',
             status: 'completed',
         });
 
@@ -210,7 +209,7 @@ router.get('/GetLessonsOfCourse/:key', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const lessons = await Lessons.find({course_id: new ObjectId(key)}).lean().exec();
+        const lessons = await Lessons.find({course_id: new ObjectId(key)}).sort({ lesson_order: 1 }).lean().exec();
 
         success = true;
         res.json({ success, lessons });
@@ -236,7 +235,7 @@ router.get('/GetLessonItems/:key', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const topics = await LessonItems.find({ lesson_id: new ObjectId(key) }).lean().exec();
+        const topics = await LessonItems.find({ lesson_id: new ObjectId(key) }).sort({ item_order: 1 }).lean().exec();
         const learningPosts = await LearningPosts.find({
             _id: { $in: topics.map(topic => topic.post_id) },
             post_type: { $in: ['topic', 'quiz'] },
@@ -254,6 +253,7 @@ router.get('/GetLessonItems/:key', fetchuser, async (req, res) => {
                 const matchingLearningPost = learningPosts.find(post => post._id.equals(topic.post_id));
                 const matchingUserItem = userItemStatus.find(item => item.item_id.equals(topic.post_id));
                 return matchingLearningPost ? {
+                    post_type: matchingLearningPost.post_type,
                     post_id: matchingLearningPost._id,
                     title: matchingLearningPost.title,
                     content: matchingLearningPost.content,
@@ -304,11 +304,12 @@ router.put('/MarkTopicCompleted/:key', fetchuser, async (req, res) => {
 
 // Add Topic In Progress
 
-router.put('/AddTopicInProgress/:key', fetchuser, async (req, res) => {  
+router.put('/AddTopicInProgress/:key', fetchuser, async (req, res) => {
     let success = false;
     const student_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key; 
+    const key = req.params.key;
+    let topic;
 
     try {
         const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
@@ -317,18 +318,30 @@ router.put('/AddTopicInProgress/:key', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const topic = await UserItems.create({
+        // Check if the topic is already in progress for the user
+        const existingTopic = await UserItems.findOne({
             student_id: student_profile_id,
             item_id: key,
             item_type: 'topic',
-            status: 'in progress'
+            status: { $in: ['completed', 'in progress'] }
         });
+
+        if (existingTopic) {
+            topic = existingTopic
+        } 
+
+        else {
+            topic = await UserItems.create({
+                student_id: student_profile_id,
+                item_id: key,
+                item_type: 'topic',
+                status: 'in progress'
+            });
+        }
 
         success = true;
         res.json({ success, topic });
-    } 
-    
-    catch (error) {
+    } catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding topic in progress");
     }
@@ -336,11 +349,11 @@ router.put('/AddTopicInProgress/:key', fetchuser, async (req, res) => {
 
 //Get questions
 
-router.get('/GetQuestions', fetchuser, async (req, res) => {
+router.get('/GetQuestions/:key', fetchuser, async (req, res) => {
     let success = false;
     const student_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const quiz_id = req.body.quiz_id; 
+    const quiz_id = req.params.key; 
 
     try {
         const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
@@ -349,7 +362,7 @@ router.get('/GetQuestions', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const questions = await QuizQuestions.find({ post_id: new ObjectId(quiz_id) }).lean().exec();
+        const questions = await QuizQuestions.find({ post_id: new ObjectId(quiz_id) }).sort({ question_order: 1 }).lean().exec();
 
         success = true;
 
@@ -357,7 +370,7 @@ router.get('/GetQuestions', fetchuser, async (req, res) => {
         const questionAnswersArray = [];
 
         for (const question of questions) {
-            const answers = await QuestionAnswers.find({ question_id: question._id }).lean().exec();
+            const answers = await QuestionAnswers.find({ question_id: question._id }).sort({ order: 1 }).lean().exec();
             questionAnswersArray.push({ question, answers });
         }
 
@@ -376,6 +389,7 @@ router.put('/AddQuizInProgress/:key', fetchuser, async (req, res) => {
     const student_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
     const key = req.params.key; 
+    let topic;
 
     try {
         const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
@@ -384,12 +398,25 @@ router.put('/AddQuizInProgress/:key', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const topic = await UserItems.create({
+        const existingTopic = await UserItems.findOne({
             student_id: student_profile_id,
             item_id: key,
             item_type: 'quiz',
-            status: 'in progress'
+            status: { $in: ['completed', 'in progress'] }
         });
+
+        if (existingTopic) {
+            topic = existingTopic
+        } 
+
+        else {
+            topic = await UserItems.create({
+                student_id: student_profile_id,
+                item_id: key,
+                item_type: 'quiz',
+                status: 'in progress'
+            });
+        }
 
         success = true;
         res.json({ success, topic });

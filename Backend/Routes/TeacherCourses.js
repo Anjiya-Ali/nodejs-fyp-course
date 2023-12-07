@@ -140,7 +140,7 @@ router.put('/UpdateCourse/:key', fetchuser, upload.single('featured_image'), asy
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const uniqueFilename = `${Date.now()}_${req.file.originalname}`;
+        const uniqueFilename = `${date}_${req.file.originalname}`;
 
         const course = await Courses.findOne({ _id: new ObjectId(key) });
 

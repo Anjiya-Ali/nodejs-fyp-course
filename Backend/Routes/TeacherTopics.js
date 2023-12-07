@@ -6,6 +6,7 @@ const LearningPosts = require('../Models/LearningPosts');
 const LessonItems = require('../Models/LessonItems');
 const multer = require('multer');
 const fetchuser = require('../Middlewares/fetchuser');
+const date = Date.now();
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -13,7 +14,7 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}_${file.originalname}`);
+        cb(null, `${date}_${file.originalname}`);
     }
 });
 
@@ -26,7 +27,7 @@ router.post('/CreateTopic', fetchuser, upload, async (req, res) => {
     let content = 'No Video Uploaed';
 
     if (req.file) {
-        const uniqueFilename = `${Date.now()}_${req.file.originalname}`;
+        const uniqueFilename = `${date}_${req.file.originalname}`;
         content = `Uploads/TopicVideos/${uniqueFilename}`;
     }
 
@@ -161,7 +162,7 @@ router.put('/UpdateTopic/:key', fetchuser, upload, async (req, res) => {
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const uniqueFilename = `${Date.now()}_${req.file.originalname}`;
+        const uniqueFilename = `${date}_${req.file.originalname}`;
 
         const topic = await LearningPosts.findOne({ _id: new ObjectId(key) });
 

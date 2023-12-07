@@ -105,6 +105,46 @@ router.get('/GetCourse/:key', fetchuser, async (req, res) => {
     }
 });
 
+//Get order course status
+
+router.get('/GetOrderCourseStatus/:id', fetchuser, async (req, res) => {  
+    let success = false;
+    const student_profile_id = req.user.id;
+    const ObjectId = mongoose.Types.ObjectId;
+    const courseId = req.params.id;
+
+    try {
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
+
+        if (!studentProfile) {
+            return res.status(400).json({ success, error: "Student profile not found" });
+        }
+
+        let payment_status = 'ADD TO CART';
+        const orders = await Orders.find({ student_id: student_profile_id });
+
+        for (const order of orders) {
+            const orderCourse = await OrderCourses.findOne({
+                order_id: order.id,
+                course_id: courseId,
+            });
+
+            if (orderCourse) {
+                payment_status = order.payment_status;
+                break;
+            }
+        }
+
+        success = true;
+        res.json({ success, payment_status })
+    } 
+    
+    catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred while creating Order");
+    }
+});
+
 // Pay Course 
 
 router.post('/PayCourse', fetchuser, async (req, res) => {  
