@@ -23,6 +23,7 @@ app.use('/Uploads', express.static('Uploads'));
 app.use('/api/Codes',require('./Routes/Code'))
 app.use('/api/User',require('./Routes/User'))
 app.use('/api/Student',require('./Routes/Student'))
+app.use('/api/Teacher',require('./Routes/Teacher'))
 app.use('/api/SocialHub',require('./Routes/SocialHub'))
 app.use('/api/TeacherCourses',require('./Routes/TeacherCourses'))
 app.use('/api/TeacherLessons',require('./Routes/TeacherLessons'))

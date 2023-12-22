@@ -487,7 +487,7 @@ router.post('/UpdateQuizGraduation', fetchuser, async (req, res) => {
         const course = await Courses.findOne({ _id: course_id});
 
         const quiz = await UserItems.findOne({ item_id: quiz_id});
-        const user_course = await UserItems.findOne({ item_id: course.post_id});
+        const user_course = await UserItems.findOne({ item_id: course_id});
         const post = await LearningPosts.findOne({ _id: course.post_id});
 
         if(!quiz.graduation || quiz.graduation == 'fail'){
