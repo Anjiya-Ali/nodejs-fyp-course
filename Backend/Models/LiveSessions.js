@@ -7,18 +7,30 @@ const liveSessionsSchema = new Schema({
     ref: 'TeacherProfile',
     required: true
   },
-  profile_picture: {
+  day: {
+    type: Date,
+    required: true
+  },
+  featured_image: {
     type: String,
     required: true
   },
-  feedback: {
-    type: Object,
+  title: {
+    type: String,
     required: true
   },
-  interests: {
-    type: [String],
+  status: {
+    type: String,
     required: true
   },
+  post_status: {
+    type: String,
+    required: true
+  },
+  meeting_id: {
+    type: String,
+    required: true
+  }
 })
 
 const liveSessions = mongoose.model('LiveSessions', liveSessionsSchema);

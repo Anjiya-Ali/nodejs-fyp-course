@@ -4,12 +4,12 @@ const User = require('../Models/User');
 const StudentProfile = require('../Models/StudentProfile');
 const Codes = require('../Models/Codes');
 const SocialHub = require('../Models/SocialHub');
-const mongoose=require('mongoose');
+const mongoose = require('mongoose');
 const crypto = require('crypto');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
-const {param, body, validationResult} = require('express-validator');
+const { param, body, validationResult } = require('express-validator');
 
 const fetchuser = require('../Middlewares/fetchuser');
 
@@ -20,20 +20,20 @@ const generateUniqueRandomNumber = () => {
     const randomBytes = crypto.randomBytes(3);
     const randomNumber = parseInt(randomBytes.toString('hex'), 16) % 100000;
     const filePath = './used-random-numbers.txt';
-  
+
     let usedNumbers = [];
     if (fs.existsSync(filePath)) {
-      usedNumbers = fs.readFileSync(filePath, 'utf8').split(',');
+        usedNumbers = fs.readFileSync(filePath, 'utf8').split(',');
     }
-  
+
     while (usedNumbers.includes(randomNumber.toString())) {
-      const randomBytes = crypto.randomBytes(3);
-      const randomNumber = parseInt(randomBytes.toString('hex'), 16) % 100000;
+        const randomBytes = crypto.randomBytes(3);
+        const randomNumber = parseInt(randomBytes.toString('hex'), 16) % 100000;
     }
-  
+
     usedNumbers.push(randomNumber.toString());
     fs.writeFileSync(filePath, usedNumbers.join(','));
-  
+
     return randomNumber.toString().padStart(5, '0');
 }
 
@@ -51,16 +51,44 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post('/UploadProfilePicture', fetchuser, upload.single('profilePicture'), async(req, res) => { //For Both Adding and Updaing Profile Picture
+router.get('/GetProfilePicture', fetchuser, async (req, res) => {
+    const student_profile_id = req.user.id;
+    const ObjectId = mongoose.Types.ObjectId;
+
+    try {
+        const studentProfile = await StudentProfile.findOne({
+            student_profile_id: new ObjectId(student_profile_id),
+        });
+
+        if (!studentProfile) {
+            return res.status(404).json({ success: false, error: 'Student profile not found' });
+        }
+
+        const profilePictureUrl = studentProfile.profile_picture;
+
+        if (!profilePictureUrl) {
+            return res.status(404).json({ success: false, error: 'Profile picture not found' });
+        }
+
+        // Send the profile picture URL in the response
+        res.json({ success: true, profilePictureUrl });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Some error occurred while fetching profile picture');
+    }
+});
+
+router.post('/UploadProfilePicture', fetchuser, upload.single('profilePicture'), async (req, res) => { //For Both Adding and Updaing Profile Picture
     if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
+    let success = false;
     const student_profile_id = req.user.id
     const ObjectId = mongoose.Types.ObjectId;
 
-    try{
-        const studentProfile = await StudentProfile.findOne({ student_profile_id : new ObjectId(student_profile_id) });
+    try {
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
@@ -79,12 +107,12 @@ router.post('/UploadProfilePicture', fetchuser, upload.single('profilePicture'),
     }
 });
 
-router.get('/ProfilePicture', fetchuser, async(req, res) => {             
+router.get('/ProfilePicture', fetchuser, async (req, res) => {
     const student_profile_id = req.user.id
     const ObjectId = mongoose.Types.ObjectId;
 
-    try{
-        const studentProfile = await StudentProfile.findOne({ student_profile_id : new ObjectId(student_profile_id) });
+    try {
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
         if (!studentProfile) {
             return res.status(400).json({ success: false, error: "Student profile not found" });
         }
@@ -94,7 +122,7 @@ router.get('/ProfilePicture', fetchuser, async(req, res) => {
         if (fs.existsSync(filePath)) {
             const absolutePath = path.join('C:/Users/insha/FYP-Temp/Backend', filePath);
             res.sendFile(absolutePath);
-        } 
+        }
         else {
             res.status(404).json({ success: false, error: 'Profile picture not found' });
         }
@@ -103,7 +131,7 @@ router.get('/ProfilePicture', fetchuser, async(req, res) => {
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching profile picture");
-    }                    
+    }
 });
 
 //FEEDBACK
@@ -124,7 +152,7 @@ router.post('/AddFeedback', fetchuser, [                                        
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const studentProfile = await StudentProfile.findOne({ student_profile_id : new ObjectId(student_profile_id) });
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
 
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
@@ -138,7 +166,7 @@ router.post('/AddFeedback', fetchuser, [                                        
 
         success = true;
         res.json({ success, message: "Feedback added successfully" });
-    } 
+    }
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding feedback");
@@ -171,7 +199,7 @@ router.post('/AddBio', fetchuser, [                                     //Both A
         success = true;
         res.json({ success, bio });
 
-    } 
+    }
 
     catch (error) {
         console.error(error.message);
@@ -196,7 +224,7 @@ router.get('/GetBio', fetchuser, [], async (req, res) => {                      
 
         success = true;
         res.json({ success, bio });
-    } 
+    }
 
     catch (error) {
         console.error(error.message);
@@ -215,7 +243,7 @@ router.post('/AddInterests', fetchuser, [], async (req, res) => {               
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
 
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
@@ -244,8 +272,8 @@ router.post('/AddInterests', fetchuser, [], async (req, res) => {               
 
         success = true;
         res.json({ success, interests });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding interests");
@@ -268,8 +296,8 @@ router.get('/GetInterests', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, interests });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching interests");
@@ -299,8 +327,8 @@ router.get('/GetInterest/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, interest });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching single interest");
@@ -311,8 +339,8 @@ router.put('/EditInterest/:key', fetchuser, async (req, res) => {
     let success = false;
     const student_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key; 
-    const { title, description } = req.body; 
+    const key = req.params.key;
+    const { title, description } = req.body;
 
     try {
         const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
@@ -337,8 +365,8 @@ router.put('/EditInterest/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, interests });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the interest");
@@ -353,7 +381,7 @@ router.post('/AddEducation', fetchuser, [], async (req, res) => {               
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
 
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
@@ -365,9 +393,9 @@ router.post('/AddEducation', fetchuser, [], async (req, res) => {               
         const end_date = req.body.end_date;
         const grade = req.body.grade;
 
-        if(start_date > end_date){
+        if (start_date > end_date) {
             success = false;
-            return res.json({ success, message : "Start date cannot be greater than end date" });
+            return res.json({ success, message: "Start date cannot be greater than end date" });
         }
 
         const currentEducations = studentProfile.education ? JSON.parse(studentProfile.education) : [];
@@ -399,8 +427,8 @@ router.post('/AddEducation', fetchuser, [], async (req, res) => {               
 
         success = true;
         res.json({ success, educations });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding education");
@@ -423,8 +451,8 @@ router.get('/GetEducations', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, educations });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching educations");
@@ -454,8 +482,8 @@ router.get('/GetEducation/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, education });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching single education");
@@ -466,8 +494,8 @@ router.put('/EditEducation/:key', fetchuser, async (req, res) => {
     let success = false;
     const student_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key; 
-    
+    const key = req.params.key;
+
     const school = req.body.school;
     const degree = req.body.degree;
     const start_date = req.body.start_date;
@@ -514,8 +542,8 @@ router.put('/EditEducation/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, educations });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the education");
@@ -530,7 +558,7 @@ router.post('/AddCertifications', fetchuser, [], async (req, res) => {          
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
 
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
@@ -559,8 +587,8 @@ router.post('/AddCertifications', fetchuser, [], async (req, res) => {          
 
         success = true;
         res.json({ success, certifications });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding certificates");
@@ -583,8 +611,8 @@ router.get('/GetCertifications', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, certifications });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching interests");
@@ -599,7 +627,7 @@ router.post('/AddBadges', fetchuser, [], async (req, res) => {                  
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
 
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
@@ -628,8 +656,8 @@ router.post('/AddBadges', fetchuser, [], async (req, res) => {                  
 
         success = true;
         res.json({ success, badges });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding badges");
@@ -652,8 +680,8 @@ router.get('/GetBadges', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, badges });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching badges");
@@ -668,7 +696,7 @@ router.post('/AddLanguages', fetchuser, [], async (req, res) => {               
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
 
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
@@ -697,8 +725,8 @@ router.post('/AddLanguages', fetchuser, [], async (req, res) => {               
 
         success = true;
         res.json({ success, languages });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding languages");
@@ -721,8 +749,8 @@ router.get('/GetLanguages', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, languages });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching languages");
@@ -752,8 +780,8 @@ router.get('/GetLanguage/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, language });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching the language");
@@ -764,8 +792,8 @@ router.put('/EditLanguage/:key', fetchuser, async (req, res) => {
     let success = false;
     const student_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key; 
-    const { name, level } = req.body; 
+    const key = req.params.key;
+    const { name, level } = req.body;
 
     try {
         const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
@@ -790,8 +818,8 @@ router.put('/EditLanguage/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, languages });
-    } 
-    
+    }
+
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the Language");
@@ -802,8 +830,8 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
     const student_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
 
-    try{
-        const studentProfile = await StudentProfile.findOne({ student_profile_id : new ObjectId(student_profile_id) });
+    try {
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id) });
 
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
@@ -823,7 +851,7 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
         const total_connections = myConnections.length;
 
         //location
-        const userProfile = await User.findOne({ _id : new ObjectId(student_profile_id) });
+        const userProfile = await User.findOne({ _id: new ObjectId(student_profile_id) });
         const location = userProfile.location;
 
         //bio
@@ -855,7 +883,7 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
         const languages = studentProfile.language ? JSON.parse(studentProfile.language) : [];
 
         success = true;
-        res.json({ success, feedback, total_connections, location, bio, full_name,  profile_picture, interests, education, certifications, badges, languages});
+        res.json({ success, feedback, total_connections, location, bio, full_name, profile_picture, interests, education, certifications, badges, languages });
     }
 
     catch (error) {

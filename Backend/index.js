@@ -32,6 +32,7 @@ app.use('/api/TeacherQuizzes',require('./Routes/TeacherQuizzes'))
 app.use('/api/TeacherQuizzes',require('./Routes/TeacherQuizzes'))
 app.use('/api/CourseEnrollment',require('./Routes/CourseEnrollment'))
 app.use('/api/CourseProgression',require('./Routes/CourseProgression'))
+app.use('/api/LiveSession',require('./Routes/LiveSession'))
 
 app.listen(port, '192.168.0.147',() => {
   console.log(`Example app listening on port ${port}`)
