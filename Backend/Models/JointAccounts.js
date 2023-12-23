@@ -7,9 +7,22 @@ const jointAccountsSchema = new Schema({
     ref: 'Courses',
     required: true
   },
-  teacher_id: {
+  invited_teacher_id: {
     type: Schema.Types.ObjectId,
     ref: 'TeacherProfile',
+    required: true
+  },
+  inviting_teacher_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'TeacherProfile',
+    required: true
+  },
+  status: {
+    type: String,
+    required: true
+  },
+  invitation_message: {
+    type: String,
     required: true
   }
 })

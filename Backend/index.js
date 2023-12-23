@@ -33,7 +33,9 @@ app.use('/api/TeacherQuizzes',require('./Routes/TeacherQuizzes'))
 app.use('/api/CourseEnrollment',require('./Routes/CourseEnrollment'))
 app.use('/api/CourseProgression',require('./Routes/CourseProgression'))
 app.use('/api/LiveSession',require('./Routes/LiveSession'))
+app.use('/api/JointAccount',require('./Routes/JointAccount'))
+app.use('/api/Admin',require('./Routes/Admin'))
 
-app.listen(port, '192.168.0.147',() => {
+app.listen(port, '192.168.121.42',() => {
   console.log(`Example app listening on port ${port}`)
 })

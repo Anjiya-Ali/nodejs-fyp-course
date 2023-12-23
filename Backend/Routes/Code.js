@@ -6,11 +6,11 @@ const mongoose=require('mongoose');
 router.get('/CreateCode' , async (req, res)=>{
     try{
         const codes = await Codes.create({
-            code: "Student"
+            code: "Connect"
         })
     
         const codes1 = await Codes.create({
-            code: "Teacher"
+            code: "Follow"
         })
 
         const Success = true;

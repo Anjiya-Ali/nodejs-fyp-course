@@ -66,7 +66,7 @@ router.post('/UploadProfilePicture', fetchuser, upload.single('profilePicture'),
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const profilePictureUrl = `Uploads/Teachers/${req.file.originalname}`;
+        const profilePictureUrl = `Uploads/ProfilePictures/${req.file.originalname}`;
 
         teacherProfile.profile_picture = profilePictureUrl;
         await teacherProfile.save();
