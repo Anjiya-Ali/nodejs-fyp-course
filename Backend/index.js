@@ -36,6 +36,6 @@ app.use('/api/LiveSession',require('./Routes/LiveSession'))
 app.use('/api/JointAccount',require('./Routes/JointAccount'))
 app.use('/api/Admin',require('./Routes/Admin'))
 
-app.listen(port, '192.168.121.42',() => {
+app.listen(port, '192.168.0.147',() => {
   console.log(`Example app listening on port ${port}`)
 })

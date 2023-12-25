@@ -46,7 +46,6 @@ router.post('/CreateUser', [
     body('email', 'Enter a valid Email').isEmail(),
     body('gender', 'Select a valid gender').optional().isIn(['Male', 'Female']),
     body('country', 'Select a valid country').optional(),
-    body('dob', 'Enter a valid date of birth').isISO8601(),
     body('privilege', 'Enter a valid privilege').optional().isIn(['Student', 'Teacher']),
 ], async (req, res) => {
 
@@ -159,11 +158,11 @@ router.post('/LoginUser', [
         success = true;
 
         if (role === 'Student') {
-            return res.json({ success, role: 'Student', authtoken });
+            return res.json({ success, role: 'Student', authtoken, id: user.id });
 
         }
         else if (role === 'Teacher') {
-            return res.json({ success, role: 'Teacher', authtoken });
+            return res.json({ success, role: 'Teacher', authtoken, id: user.id });
         }
     }
 

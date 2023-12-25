@@ -5,12 +5,12 @@ const TeacherProfile = require('../Models/TeacherProfile');
 const StudentProfile = require('../Models/StudentProfile');
 const Codes = require('../Models/Codes');
 const SocialHub = require('../Models/SocialHub');
-const mongoose = require('mongoose');
+const mongoose=require('mongoose');
 const crypto = require('crypto');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
-const { param, body, validationResult } = require('express-validator');
+const {param, body, validationResult} = require('express-validator');
 
 const fetchuser = require('../Middlewares/fetchuser');
 
@@ -21,20 +21,20 @@ const generateUniqueRandomNumber = () => {
     const randomBytes = crypto.randomBytes(3);
     const randomNumber = parseInt(randomBytes.toString('hex'), 16) % 100000;
     const filePath = './used-random-numbers.txt';
-
+  
     let usedNumbers = [];
     if (fs.existsSync(filePath)) {
-        usedNumbers = fs.readFileSync(filePath, 'utf8').split(',');
+      usedNumbers = fs.readFileSync(filePath, 'utf8').split(',');
     }
-
+  
     while (usedNumbers.includes(randomNumber.toString())) {
-        const randomBytes = crypto.randomBytes(3);
-        const randomNumber = parseInt(randomBytes.toString('hex'), 16) % 100000;
+      const randomBytes = crypto.randomBytes(3);
+      const randomNumber = parseInt(randomBytes.toString('hex'), 16) % 100000;
     }
-
+  
     usedNumbers.push(randomNumber.toString());
     fs.writeFileSync(filePath, usedNumbers.join(','));
-
+  
     return randomNumber.toString().padStart(5, '0');
 }
 
@@ -52,7 +52,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-router.post('/UploadProfilePicture', fetchuser, upload.single('profilePicture'), async (req, res) => { //For Both Adding and Updaing Profile Picture
+router.post('/UploadProfilePicture', fetchuser, upload.single('profilePicture'), async(req, res) => { //For Both Adding and Updaing Profile Picture
     if (!req.file) {
         return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
@@ -60,8 +60,8 @@ router.post('/UploadProfilePicture', fetchuser, upload.single('profilePicture'),
     const teacher_profile_id = req.user.id
     const ObjectId = mongoose.Types.ObjectId;
 
-    try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+    try{
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id : new ObjectId(teacher_profile_id) });
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
@@ -107,24 +107,24 @@ router.delete('/DeleteProfilePicture', fetchuser, async (req, res) => {
 
             success = true;
             res.json({ success, message: "Profile picture deleted successfully" });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "Profile picture not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting profile picture");
     }
 });
 
-router.get('/ProfilePicture', fetchuser, async (req, res) => {
+router.get('/ProfilePicture', fetchuser, async(req, res) => {             
     const teacher_profile_id = req.user.id
     const ObjectId = mongoose.Types.ObjectId;
 
-    try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+    try{
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id : new ObjectId(teacher_profile_id) });
         if (!teacherProfile) {
             return res.status(400).json({ success: false, error: "Teacher profile not found" });
         }
@@ -134,7 +134,7 @@ router.get('/ProfilePicture', fetchuser, async (req, res) => {
         if (fs.existsSync(filePath)) {
             const absolutePath = path.join('C:/Users/insha/FYP-Temp/Backend', filePath);
             res.sendFile(absolutePath);
-        }
+        } 
         else {
             res.status(404).json({ success: false, error: 'Profile picture not found' });
         }
@@ -143,7 +143,7 @@ router.get('/ProfilePicture', fetchuser, async (req, res) => {
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching profile picture");
-    }
+    }                    
 });
 
 //FEEDBACK
@@ -166,29 +166,29 @@ router.post('/AddFeedback/:teacher_profile_id', fetchuser, [                    
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const userProfile = await User.findOne({ _id: new ObjectId(userId) });
+        const userProfile = await User.findOne({ _id : new ObjectId(userId) });
         if (!userProfile) {
             return res.status(400).json({ success, error: "User profile not found" });
         }
 
         const feedbackProviderId = userId;
-        const feedbackProviderFullName = userProfile.first_name + " " + userProfile.last_name
+        const feedbackProviderFullName = userProfile.first_name + " " +userProfile.last_name
 
         const privilegeId = userProfile.privilege_id;
-        const privilegeCode = await Codes.findOne({ _id: new ObjectId(privilegeId) });
+        const privilegeCode = await Codes.findOne({ _id : new ObjectId(privilegeId)});
         const privilege = privilegeCode.code;
 
         let feedbackProviderProfilePicture;
-        if (privilege === "Student") {
-            const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(userId) });
+        if(privilege === "Student"){
+            const studentProfile = await StudentProfile.findOne({ student_profile_id : new ObjectId(userId) });
             feedbackProviderProfilePicture = studentProfile.profile_picture
         }
-        else if (privilege === "Teacher") {
-            const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(userId) });
+        else if(privilege === "Teacher"){
+            const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id : new ObjectId(userId) });
             feedbackProviderProfilePicture = teacherProfile.profile_picture
         }
 
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id : new ObjectId(teacher_profile_id) });
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -217,7 +217,7 @@ router.post('/AddFeedback/:teacher_profile_id', fetchuser, [                    
 
         success = true;
         res.json({ success, feedbacks, message: "Feedback added successfully" });
-    }
+    } 
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding feedback");
@@ -250,7 +250,7 @@ router.post('/AddBio', fetchuser, [                                     //Both A
         success = true;
         res.json({ success, bio });
 
-    }
+    } 
 
     catch (error) {
         console.error(error.message);
@@ -275,7 +275,7 @@ router.get('/GetBio', fetchuser, [], async (req, res) => {                      
 
         success = true;
         res.json({ success, bio });
-    }
+    } 
 
     catch (error) {
         console.error(error.message);
@@ -294,7 +294,7 @@ router.post('/AddEducation', fetchuser, [], async (req, res) => {               
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -306,13 +306,13 @@ router.post('/AddEducation', fetchuser, [], async (req, res) => {               
         const end_date = req.body.end_date;
         const grade = req.body.grade;
 
-        if (!end_date) {
+        if(!end_date){
             end_date = "Present"
         }
-        else {
-            if (start_date > end_date) {
+        else{
+            if(start_date > end_date){
                 success = false;
-                return res.json({ success, message: "Start date cannot be greater than end date" });
+                return res.json({ success, message : "Start date cannot be greater than end date" });
             }
         }
 
@@ -345,8 +345,8 @@ router.post('/AddEducation', fetchuser, [], async (req, res) => {               
 
         success = true;
         res.json({ success, educations });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding education");
@@ -381,12 +381,12 @@ router.delete('/DeleteEducation/:educationKey', fetchuser, async (req, res) => {
 
             success = true;
             res.json({ success, educations });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "Education not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting education");
@@ -409,8 +409,8 @@ router.get('/GetEducations', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, educations });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching educations");
@@ -440,8 +440,8 @@ router.get('/GetEducation/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, education });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching single education");
@@ -452,21 +452,21 @@ router.put('/EditEducation/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key;
-
+    const key = req.params.key; 
+    
     const school = req.body.school;
     const degree = req.body.degree;
     const start_date = req.body.start_date;
     const end_date = req.body.end_date;
     const grade = req.body.grade;
 
-    if (!end_date) {
+    if(!end_date){
         end_date = "Present"
     }
-    else {
-        if (start_date > end_date) {
+    else{
+        if(start_date > end_date){
             success = false;
-            return res.json({ success, message: "Start date cannot be greater than end date" });
+            return res.json({ success, message : "Start date cannot be greater than end date" });
         }
     }
 
@@ -506,8 +506,8 @@ router.put('/EditEducation/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, educations });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the education");
@@ -522,7 +522,7 @@ router.post('/AddExperience', fetchuser, [], async (req, res) => {              
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -534,9 +534,9 @@ router.post('/AddExperience', fetchuser, [], async (req, res) => {              
         let end_date = req.body.end_date;
         const location = req.body.location;
 
-        if (start_date > end_date) {
+        if(start_date > end_date){
             success = false;
-            return res.json({ success, message: "Start date cannot be greater than end date" });
+            return res.json({ success, message : "Start date cannot be greater than end date" });
         }
 
         const currentExperiences = teacherProfile.experience ? JSON.parse(teacherProfile.experience) : [];
@@ -568,8 +568,8 @@ router.post('/AddExperience', fetchuser, [], async (req, res) => {              
 
         success = true;
         res.json({ success, experiences });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding experience");
@@ -604,12 +604,12 @@ router.delete('/DeleteExperience/:experienceKey', fetchuser, async (req, res) =>
 
             success = true;
             res.json({ success, experiences });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "Experience not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting experience");
@@ -632,8 +632,8 @@ router.get('/GetExperiences', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, experiences });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching experiences");
@@ -663,8 +663,8 @@ router.get('/GetExperience/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, experience });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching single experience");
@@ -675,21 +675,21 @@ router.put('/EditExperience/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key;
-
+    const key = req.params.key; 
+    
     const title = req.body.title;
     const company = req.body.company;
     const start_date = req.body.start_date;
     let end_date = req.body.end_date;
     const location = req.body.location;
 
-    if (!end_date) {
+    if(!end_date){
         end_date = "Present"
     }
-    else {
-        if (start_date > end_date) {
+    else{
+        if(start_date > end_date){
             success = false;
-            return res.json({ success, message: "Start date cannot be greater than end date" });
+            return res.json({ success, message : "Start date cannot be greater than end date" });
         }
     }
 
@@ -729,8 +729,8 @@ router.put('/EditExperience/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, experiences });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the experience");
@@ -745,7 +745,7 @@ router.post('/AddCertifications', fetchuser, [], async (req, res) => {          
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -776,8 +776,8 @@ router.post('/AddCertifications', fetchuser, [], async (req, res) => {          
 
         success = true;
         res.json({ success, certifications });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding certificates");
@@ -812,12 +812,12 @@ router.delete('/DeleteCertificate/:certificateKey', fetchuser, async (req, res) 
 
             success = true;
             res.json({ success, certificates });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "Certificate not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting certificate");
@@ -840,8 +840,8 @@ router.get('/GetCertifications', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, certifications });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching certificates");
@@ -871,8 +871,8 @@ router.get('/GetCertificate/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, certification });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching the certificate");
@@ -883,8 +883,8 @@ router.put('/EditCertification/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key;
-    const { title, issuer, link } = req.body;
+    const key = req.params.key; 
+    const { title, issuer, link } = req.body; 
 
     try {
         const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
@@ -910,8 +910,8 @@ router.put('/EditCertification/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, certifications });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the certificate");
@@ -931,18 +931,18 @@ router.post('/AddProjects', fetchuser, [], async (req, res) => {                
     let end_date = req.body.end_date;
     const link = req.body.link;
 
-    if (!end_date) {
+    if(!end_date){
         end_date = "Present"
     }
-    else {
-        if (start_date > end_date) {
+    else{
+        if(start_date > end_date){
             success = false;
-            return res.json({ success, message: "Start date cannot be greater than end date" });
+            return res.json({ success, message : "Start date cannot be greater than end date" });
         }
     }
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -977,8 +977,8 @@ router.post('/AddProjects', fetchuser, [], async (req, res) => {                
 
         success = true;
         res.json({ success, projects });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding projects");
@@ -1013,12 +1013,12 @@ router.delete('/DeleteProject/:projectKey', fetchuser, async (req, res) => {
 
             success = true;
             res.json({ success, projects });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "Project not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting Project");
@@ -1041,8 +1041,8 @@ router.get('/GetProjects', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, projects });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching projects");
@@ -1072,8 +1072,8 @@ router.get('/GetProject/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, project });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching the project");
@@ -1084,21 +1084,21 @@ router.put('/EditProject/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key;
-
+    const key = req.params.key; 
+    
     const title = req.body.title;
     const description = req.body.description;
     const start_date = req.body.start_date;
     let end_date = req.body.end_date;
     const link = req.body.link;
 
-    if (!end_date) {
+    if(!end_date){
         end_date = "Present"
     }
-    else {
-        if (start_date > end_date) {
+    else{
+        if(start_date > end_date){
             success = false;
-            return res.json({ success, message: "Start date cannot be greater than end date" });
+            return res.json({ success, message : "Start date cannot be greater than end date" });
         }
     }
 
@@ -1138,8 +1138,8 @@ router.put('/EditProject/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, projects });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the projects");
@@ -1158,7 +1158,7 @@ router.post('/AddHAW', fetchuser, [], async (req, res) => {                     
     const issue_date = req.body.issue_date;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -1191,8 +1191,8 @@ router.post('/AddHAW', fetchuser, [], async (req, res) => {                     
 
         success = true;
         res.json({ success, HAW });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding HAW");
@@ -1227,12 +1227,12 @@ router.delete('/DeleteHAW/:hawKey', fetchuser, async (req, res) => {
 
             success = true;
             res.json({ success, HAW });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "HAW not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting HAW");
@@ -1255,8 +1255,8 @@ router.get('/GetHAW', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, HAW });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching HAW");
@@ -1286,8 +1286,8 @@ router.get('/GetHAW/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, haw });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching the haw");
@@ -1298,8 +1298,8 @@ router.put('/EditHAW/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key;
-
+    const key = req.params.key; 
+    
     const title = req.body.title;
     const issuer = req.body.issuer;
     const issue_date = req.body.issue_date;
@@ -1338,8 +1338,8 @@ router.put('/EditHAW/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, HAW });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the HAW");
@@ -1354,7 +1354,7 @@ router.post('/AddSkills', fetchuser, [], async (req, res) => {                  
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -1387,8 +1387,8 @@ router.post('/AddSkills', fetchuser, [], async (req, res) => {                  
 
         success = true;
         res.json({ success, skills });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding skills");
@@ -1423,12 +1423,12 @@ router.delete('/DeleteSkills/:skillKey', fetchuser, async (req, res) => {
 
             success = true;
             res.json({ success, skills });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "Skill not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting skill");
@@ -1451,8 +1451,8 @@ router.get('/GetSkills', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, skills });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching skills");
@@ -1482,8 +1482,8 @@ router.get('/GetSkill/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, skill });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching the skill");
@@ -1494,8 +1494,8 @@ router.put('/EditLanguage/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key;
-    const { name, level } = req.body;
+    const key = req.params.key; 
+    const { name, level } = req.body; 
 
     try {
         const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
@@ -1520,8 +1520,8 @@ router.put('/EditLanguage/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, languages });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the Language");
@@ -1536,7 +1536,7 @@ router.post('/AddLanguages', fetchuser, [], async (req, res) => {               
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -1565,8 +1565,8 @@ router.post('/AddLanguages', fetchuser, [], async (req, res) => {               
 
         success = true;
         res.json({ success, languages });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while adding languages");
@@ -1601,12 +1601,12 @@ router.delete('/DeleteLanguage/:languageKey', fetchuser, async (req, res) => {
 
             success = true;
             res.json({ success, languages });
-        }
+        } 
         else {
             return res.status(404).json({ success, error: "Language not found" });
         }
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while deleting language");
@@ -1629,8 +1629,8 @@ router.get('/GetLanguages', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, languages });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching languages");
@@ -1660,8 +1660,8 @@ router.get('/GetLanguage/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, language });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching the language");
@@ -1672,8 +1672,8 @@ router.put('/EditLanguage/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key;
-    const { name, level } = req.body;
+    const key = req.params.key; 
+    const { name, level } = req.body; 
 
     try {
         const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
@@ -1698,38 +1698,11 @@ router.put('/EditLanguage/:key', fetchuser, async (req, res) => {
 
         success = true;
         res.json({ success, languages });
-    }
-
+    } 
+    
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the Language");
-    }
-});
-
-router.get('/GetProfilePicture', fetchuser, async (req, res) => {
-    const teacher_profile_id = req.user.id;
-    const ObjectId = mongoose.Types.ObjectId;
-
-    try {
-        const teacherProfile = await TeacherProfile.findOne({
-            teacher_profile_id: new ObjectId(teacher_profile_id),
-        });
-
-        if (!teacherProfile) {
-            return res.status(404).json({ success: false, error: 'Teacher profile not found' });
-        }
-
-        const profilePictureUrl = teacherProfile.profile_picture;
-
-        if (!profilePictureUrl) {
-            return res.status(404).json({ success: false, error: 'Profile picture not found' });
-        }
-
-        // Send the profile picture URL in the response
-        res.json({ success: true, profilePictureUrl });
-    } catch (error) {
-        console.error(error.message);
-        res.status(500).send('Some error occurred while fetching profile picture');
     }
 });
 
@@ -1738,8 +1711,8 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
 
-    try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
+    try{
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id : new ObjectId(teacher_profile_id) });
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
@@ -1769,7 +1742,7 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
         const total_followers = teacherProfile.total_followers;
 
         //location
-        const userProfile = await User.findOne({ _id: new ObjectId(teacher_profile_id) });
+        const userProfile = await User.findOne({ _id : new ObjectId(teacher_profile_id) });
         const location = userProfile.country;
 
         //bio
@@ -1803,12 +1776,41 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
         const languages = teacherProfile.language ? JSON.parse(teacherProfile.language) : [];
 
         success = true;
-        res.json({ success, feedback, feedbacks, total_connections, total_followers, location, bio, full_name, profile_picture, education, experience, certifications, projects, haw, skills, languages });
+        res.json({ success, feedback, feedbacks, total_connections, total_followers, location, bio, full_name,  profile_picture, education, experience, certifications, projects, haw, skills, languages});
     }
 
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while returning the profile");
+    }
+});
+
+//GET PROFILE PICTURE
+
+router.get('/GetProfilePicture', fetchuser, async (req, res) => {
+    const teacher_profile_id = req.user.id;
+    const ObjectId = mongoose.Types.ObjectId;
+
+    try {
+        const teacherProfile = await TeacherProfile.findOne({
+            teacher_profile_id: new ObjectId(teacher_profile_id),
+        });
+
+        if (!teacherProfile) {
+            return res.status(404).json({ success: false, error: 'Teacher profile not found' });
+        }
+
+        const profilePictureUrl = teacherProfile.profile_picture;
+
+        if (!profilePictureUrl) {
+            return res.status(404).json({ success: false, error: 'Profile picture not found' });
+        }
+
+        // Send the profile picture URL in the response
+        res.json({ success: true, profilePictureUrl });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Some error occurred while fetching profile picture');
     }
 });
 

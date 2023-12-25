@@ -3,8 +3,7 @@ const router = express.Router();
 const User = require('../Models/User');
 const TeacherProfile = require('../Models/TeacherProfile');
 const Codes = require('../Models/Codes');
-// const Courses = require('../Models/Courses');
-const CoursesTemp = require('../Models/CoursesTemp');
+const Courses = require('../Models/Courses');
 const SocialHub = require('../Models/SocialHub');
 const JointAccounts = require('../Models/JointAccounts');
 const mongoose=require('mongoose');
@@ -133,7 +132,7 @@ router.get('/getCourseById/:courseId', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const course = await CoursesTemp.findOne({ _id : new ObjectId(courseId) });
+        const course = await Courses.findOne({ post_id : new ObjectId(courseId) });
 
         success = true;
         res.json({ success, course });
@@ -300,10 +299,11 @@ router.get('/ViewJointAccountRequests', fetchuser, async (req, res) => {
 
                 const user = await User.findOne({ _id: new ObjectId(request.inviting_teacher_id) });
 
-                const course = await CoursesTemp.findOne({ _id: new ObjectId(request.course_id) });
+                const course = await Courses.findOne({ post_id: new ObjectId(request.course_id) });
 
                 jointAccountRequestsInfo.push({
                     jointAccountRequestId: request._id,
+                    id: request.inviting_teacher_id,
                     courseId: request.course_id,
                     courseName: course.name,
                     name: user.first_name + " " + user.last_name,
@@ -375,7 +375,7 @@ router.get('/ViewDetailsOfJoinAccountRequest/:jointAccountRequestId', fetchuser,
             return res.status(200).json({ success, jointAccountRequestDetail });
         }
         else{
-            const course = await CoursesTemp.findOne({ _id: new ObjectId(jointAccountRequests.course_id) });
+            const course = await Courses.findOne({ post_id: new ObjectId(jointAccountRequests.course_id) });
 
             const user = await User.findOne({ _id: new ObjectId(jointAccountRequests.inviting_teacher_id) });
 

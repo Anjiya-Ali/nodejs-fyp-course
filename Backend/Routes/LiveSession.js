@@ -261,7 +261,7 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
 
         if(followedTeachers.length == 0){
             success = true
-            return res.status(200).json({ success, message: "No live sessions" });
+            return res.status(200).json({ success, message: "No live sessions 1" });
         }
         else{
             let liveSessionsInfo = [];
@@ -275,7 +275,7 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
                 const liveSessionsByTeacher = await LiveSessions.find({ 
                     $and: [
                         { teacher_id : new ObjectId(teacherId) },
-                        { status : "Live" }
+                        { status : "Todo" }
                     ]
                  });
 
