@@ -42,7 +42,7 @@ const generateUniqueRandomNumber = () => {
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = 'Uploads/Teachers';
+        const uploadDir = 'Uploads/ProfilePictures';
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {

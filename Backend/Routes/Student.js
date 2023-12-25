@@ -971,11 +971,14 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        //feedback
-        const feedbackArray = studentProfile.feedback.split(' ').map(Number);
         let feedback = 0;
-        if (feedbackArray.length > 0) {
-            feedback = feedbackArray.reduce((acc, value) => acc + value, 0) / feedbackArray.length;
+
+        if(studentProfile.feedback){
+            //feedback
+            const feedbackArray = studentProfile.feedback.split(' ').map(Number);
+            if (feedbackArray.length > 0) {
+                feedback = feedbackArray.reduce((acc, value) => acc + value, 0) / feedbackArray.length;
+            }
         }
 
         //total connections

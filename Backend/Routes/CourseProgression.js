@@ -490,6 +490,9 @@ router.post('/UpdateQuizGraduation', fetchuser, async (req, res) => {
         const user_course = await UserItems.findOne({ item_id: course_id});
         const post = await LearningPosts.findOne({ _id: course.post_id});
 
+        const user = await User.findOne({ _id: new ObjectId(post.author_user_id) });
+        const name = user.first_name + " " + user.last_name;
+
         if(!quiz.graduation || quiz.graduation == 'fail'){
             if(graduation == 'fail'){
                 quiz.graduation = graduation;
@@ -501,7 +504,7 @@ router.post('/UpdateQuizGraduation', fetchuser, async (req, res) => {
                 user_course.status = 'completed';
                 await quiz.save();
                 await user_course.save();
-                addCertificate(post.title, post.author_user_id, studentProfile);
+                addCertificate(post.title, name, studentProfile);
 
                 const passed = await UserItems.find({ graduation: 'pass'});
                 const length = passed.length;

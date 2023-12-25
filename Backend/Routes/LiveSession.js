@@ -8,6 +8,7 @@ const multer = require('multer');
 const mongoose=require('mongoose');
 const TeacherProfile = require('../Models/TeacherProfile');
 const StudentProfile = require('../Models/StudentProfile');
+const date = Date.now();
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -15,7 +16,7 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        cb(null, file.originalname);
+        cb(null, `${date}_${file.originalname}`);
     }
 });
 
@@ -41,7 +42,7 @@ router.post('/CreateLiveSession', fetchuser, upload.single('featured_image'), as
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const uniqueFilename = `${Date.now()}_${req.file.originalname}`;
+        const uniqueFilename = `${date}_${req.file.originalname}`;
         const combinedDateTime = new Date(`${req.body.date}T${req.body.time}Z`);
 
         const live_session = await LiveSessions.create({
@@ -50,7 +51,8 @@ router.post('/CreateLiveSession', fetchuser, upload.single('featured_image'), as
             day: new Date(combinedDateTime),
             featured_image : `Uploads/SessionImages/${uniqueFilename}`,
             status: "Todo",
-            post_status: "Published"
+            post_status: "Published",
+            meeting_id: req.body.meeting_id
         });
         
         success = true;
@@ -275,7 +277,7 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
                 const liveSessionsByTeacher = await LiveSessions.find({ 
                     $and: [
                         { teacher_id : new ObjectId(teacherId) },
-                        { status : "Todo" }
+                        { status : "Live" }
                     ]
                  });
 
@@ -304,6 +306,40 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching live sessions");
+    }
+});
+
+router.put('/UpdateLiveSessionHls/:key', fetchuser, async (req, res) => {  
+
+    let success = false;
+    const teacher_profile_id = req.user.id;
+    const ObjectId = mongoose.Types.ObjectId;
+    const key = req.params.key; 
+    const status = req.body.status; 
+
+    try {
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
+
+        if (!teacherProfile) {
+            return res.status(400).json({ success, error: "Teacher profile not found" });
+        }
+
+        const session = await LiveSessions.findOne({ _id: new ObjectId(key) });
+
+        if (!session) {
+            return res.status(404).json({ success, error: "Session not found" });
+        }
+
+        session.status = status;
+        await session.save();
+
+        success = true;
+        res.json({ success, session });
+    } 
+
+    catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred while editing the session status");
     }
 });
 
