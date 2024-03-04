@@ -38,6 +38,6 @@ app.use('/api/Admin',require('./Routes/Admin'))
 app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
 app.use('/api/Notifications',require('./Routes/Notifications'))
 
-app.get("/", (req, res) => res.send("Express on Vercel"));
-
-app.listen(3000, () => console.log("Server ready on port 3000."));
+app.listen(port, '172.16.91.20',() => {
+  console.log(`Example app listening on port ${port}`)
+})
