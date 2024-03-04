@@ -25,6 +25,10 @@ const coursesSchema = new Schema({
   rating: {
     type: String,
     required: false
+  },
+  categories: {
+    type: String,
+    required: true
   }
 })
 

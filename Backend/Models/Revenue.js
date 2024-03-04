@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const revenueSchema = new Schema({
   month: {
-    type: Date,
+    type: Number,
     required: true
   },
   year: {

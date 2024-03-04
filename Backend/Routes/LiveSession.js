@@ -23,6 +23,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const fetchuser = require('../Middlewares/fetchuser');
+const interestedSessions = require('../Models/InterestedSessions');
 
 router.post('/CreateLiveSession', fetchuser, upload.single('featured_image'), async (req, res) => {  
 
@@ -175,7 +176,7 @@ router.delete('/DeleteLiveSession/:key', fetchuser, async (req, res) => {
     }
 });
 
-router.get('/GetAllLiveSessions', fetchuser, async (req, res) => {
+router.get('/GetAllUpcomingSessions', fetchuser, async (req, res) => {
     let success = false;
     const person_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
@@ -208,22 +209,33 @@ router.get('/GetAllLiveSessions', fetchuser, async (req, res) => {
                 const teacher = await User.findOne({ _id : new ObjectId(teacherId) });
                 const teacherName = teacher.first_name + " " + teacher.last_name;
 
+                const currentDate = new Date();
+
                 const liveSessionsByTeacher = await LiveSessions.find({ 
                     $and: [
                         { teacher_id : new ObjectId(teacherId) },
-                        { status : "Todo" }
+                        { day: { $gt: currentDate } }
                     ]
                  });
 
                  for (const liveSession of liveSessionsByTeacher){
-
+                    
+                    var interested = false;
+                    const interestedSession = await interestedSessions.findOne({ student_id : new ObjectId(person_id), session_id : new ObjectId(liveSession._id) });
+                    
+                    if(interestedSession){
+                        interested = true;
+                    }
+                    
                     liveSessionsInfo.push({
+                        id: liveSession._id,
                         liveSessionTitle: liveSession.title,
                         liveSessionImage: liveSession.featured_image,
-                        liveSessionTeacher: teacherName
+                        liveSessionTeacher: teacherName,
+                        interested: interested
                     });
 
-                 }
+                }
             }
             success = true;
             if(liveSessionsInfo.length == 0){
@@ -241,6 +253,35 @@ router.get('/GetAllLiveSessions', fetchuser, async (req, res) => {
     }
 });
 
+router.post('/AddInterestedSession', fetchuser, async (req, res) => {  
+
+    let success = false;
+    const student_profile_id = req.user.id;
+    const session_id = req.body.session_id;
+    const ObjectId = mongoose.Types.ObjectId;
+
+    try {
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
+
+        if (!studentProfile) {
+            return res.status(400).json({ success, error: "Student profile not found" });
+        }
+
+        const interestedSession = await interestedSessions.create({
+            student_id: new ObjectId(student_profile_id),
+            session_id : session_id,
+        });
+        
+        success = true;
+        res.json({ success, interestedSession })
+    } 
+    
+    catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred while creating interested session");
+    }
+});
+
 router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
     let success = false;
     const person_id = req.user.id;
@@ -252,32 +293,28 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const privilegeCodeOfFollow = await Codes.findOne({ code: 'Follow' });
+        // const privilegeCodeOfFollow = await Codes.findOne({ code: 'Follow' });
 
-        const followedTeachers = await SocialHub.find({
-            $and: [
-                { person_2_id: new ObjectId(person_id) },
-                { relationship_id: privilegeCodeOfFollow._id }
-            ]
-        })
+        // const followedTeachers = await SocialHub.find({
+        //     $and: [
+        //         { person_2_id: new ObjectId(person_id) },
+        //         { relationship_id: privilegeCodeOfFollow._id }
+        //     ]
+        // })
 
-        if(followedTeachers.length == 0){
-            success = true
-            return res.status(200).json({ success, message: "No live sessions 1" });
-        }
-        else{
+        // if(followedTeachers.length == 0){
+        //     success = true
+        //     return res.status(200).json({ success, message: "No live sessions 1" });
+        // }
+        // else{
             let liveSessionsInfo = [];
 
-            for (const followedTeacher of followedTeachers) {
+            // for (const followedTeacher of followedTeachers) {
 
-                const teacherId = followedTeacher.person_1_id;
-                const teacher = await User.findOne({ _id : new ObjectId(teacherId) });
-                const teacherName = teacher.first_name + " " + teacher.last_name;
 
                 const liveSessionsByTeacher = await LiveSessions.find({ 
                     $and: [
-                        { teacher_id : new ObjectId(teacherId) },
-                        { status : "Live" }
+                        { status : "Todo" }
                     ]
                  });
 
@@ -288,11 +325,10 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
                         meetingId: liveSession.meeting_id,
                         liveSessionTitle: liveSession.title,
                         liveSessionImage: liveSession.featured_image,
-                        liveSessionTeacher: teacherName
                     });
 
                  }
-            }
+            // }
             success = true;
             if(liveSessionsInfo.length == 0){
                 return res.json({ success, message: "No live sessions" });
@@ -300,7 +336,7 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
             else{
                 return res.json({ success, liveSessions: liveSessionsInfo });
             }
-        }
+        // }
     }
 
     catch (error) {

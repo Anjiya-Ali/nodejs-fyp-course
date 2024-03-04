@@ -35,7 +35,9 @@ app.use('/api/CourseProgression',require('./Routes/CourseProgression'))
 app.use('/api/LiveSession',require('./Routes/LiveSession'))
 app.use('/api/JointAccount',require('./Routes/JointAccount'))
 app.use('/api/Admin',require('./Routes/Admin'))
+app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
+app.use('/api/Notifications',require('./Routes/Notifications'))
 
-app.listen(port, '192.168.0.147',() => {
-  console.log(`Example app listening on port ${port}`)
-})
+app.get("/", (req, res) => res.send("Express on Vercel"));
+
+app.listen(3000, () => console.log("Server ready on port 3000."));

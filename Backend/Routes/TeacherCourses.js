@@ -59,7 +59,8 @@ router.post('/CreateCourse', fetchuser, upload.single('featured_image'), async (
             language : req.body.language,
             fees : req.body.charges,
             duration : req.body.duration,
-            post_id : learning_post.id
+            post_id : learning_post.id,
+            categories: JSON.stringify(req.body.categories)
         });
 
         const data = {

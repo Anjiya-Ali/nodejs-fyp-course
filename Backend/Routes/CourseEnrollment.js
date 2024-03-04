@@ -204,7 +204,7 @@ router.get('/GetPendingOrders', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const orders = await Orders.find({student_id: new ObjectId(student_profile_id), payment_status: 'pending'}).lean().exec();
+        const orders = await Orders.find({student_id: new ObjectId(student_profile_id), payment_status: 'pending', purpose: 'course'}).lean().exec();
 
         success = true;
         res.json({ success, orders });
