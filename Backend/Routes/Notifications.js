@@ -4,11 +4,24 @@ const User = require('../Models/User');
 const Notifications = require('../Models/Notifications');
 const mongoose=require('mongoose');
 const fetchuser = require('../Middlewares/fetchuser');
+const FirebaseToken = require('../Models/FirebaseToken');
+var admin = require("firebase-admin");
+
+const sendPushNotification = (message)  => {
+    admin.messaging().send(message)
+    .then((response) => {
+        console.log('successfully sent', response);
+    })
+    .catch((error) => {
+        console.log('error sending message:', error)
+    })
+}
 
 router.post('/CreateNotification', fetchuser, async (req, res) => {  
 
     let success = false;
     const user_id = req.user.id;
+    const noti_user_id = req.body.user_id;
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
@@ -19,12 +32,30 @@ router.post('/CreateNotification', fetchuser, async (req, res) => {
         }
 
         const notification = await Notifications.create({
-            user_id: new ObjectId(user_id),
+            user_id: new ObjectId(noti_user_id),
             message : req.body.message,
             redirect: req.body.redirect,
             createdAt: new Date(),
             read: false
         });
+
+        const token = await FirebaseToken.findOne({ user_id: new ObjectId(noti_user_id)});
+        const redirect = req.body.redirect;
+
+        if (token) {
+            const message = {
+                notification: {
+                    title: req.body.title,
+                    body: req.body.message
+                },
+                data: {
+                    redirect: redirect
+                },
+                token: token.token
+            }
+
+            sendPushNotification(message);
+        }
         
         success = true;
         res.json({ success, notification })

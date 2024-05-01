@@ -950,7 +950,6 @@ router.get('/GetProfilePicture', fetchuser, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Profile picture not found' });
         }
 
-        // Send the profile picture URL in the response
         res.json({ success: true, profilePictureUrl });
     } catch (error) {
         console.error(error.message);

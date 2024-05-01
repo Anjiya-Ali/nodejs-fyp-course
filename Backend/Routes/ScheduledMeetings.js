@@ -7,6 +7,18 @@ const multer = require('multer');
 const mongoose=require('mongoose');
 const date = Date.now();
 const fetchuser = require('../Middlewares/fetchuser');
+const FirebaseToken = require('../Models/FirebaseToken');
+var admin = require("firebase-admin");
+
+const sendPushNotification = (message)  => {
+    admin.messaging().send(message)
+    .then((response) => {
+        console.log('successfully sent', response);
+    })
+    .catch((error) => {
+        console.log('error sending message:', error)
+    })
+}
 
 router.post('/CreateScheduledMeeting', fetchuser, async (req, res) => {  
 
@@ -26,8 +38,36 @@ router.post('/CreateScheduledMeeting', fetchuser, async (req, res) => {
         const scheduled_meeting = await Meetings.create({
             user_id: new ObjectId(user_id),
             title : req.body.title,
-            date: new Date(combinedDateTime),
+            date: combinedDateTime,
         });
+
+        const token = await FirebaseToken.findOne({ user_id: new ObjectId(user_id)});
+        const titlee = req.body.title;
+        const redirect = 'ScheduledMeeting';
+
+        if (token) {
+            const message = {
+                notification: {
+                    title: 'Scheduled Meeting Reminder',
+                    body: 'Reminder!! Your meeting " ' + titlee + ' " has been scheduled in an hour'
+                },
+                data: {
+                    redirect: redirect
+                },
+                token: token.token
+            }
+    
+            const datee = new Date(combinedDateTime)
+            const schedule = require('node-schedule');
+            var jobId = user_id + '_' + datee;  
+
+            datee.setUTCHours(datee.getUTCHours() - 1);
+
+            schedule.scheduleJob(jobId, datee,function(){
+                schedule.cancelJob(jobId);
+                sendPushNotification(message);
+            });
+        }
         
         success = true;
         res.json({ success, scheduled_meeting })

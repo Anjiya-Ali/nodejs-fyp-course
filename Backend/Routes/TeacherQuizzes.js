@@ -500,11 +500,11 @@ router.delete('/DeleteQuestion/:key', fetchuser, async (req, res) => {
 
 //Get questions
 
-router.get('/GetQuestions', fetchuser, async (req, res) => {
+router.get('/GetQuestions/:key', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const quiz_id = req.body.quiz_id;
+    const quiz_id = req.params.key;
 
     try {
         const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });

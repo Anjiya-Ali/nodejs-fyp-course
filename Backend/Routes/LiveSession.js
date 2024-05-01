@@ -8,7 +8,20 @@ const multer = require('multer');
 const mongoose=require('mongoose');
 const TeacherProfile = require('../Models/TeacherProfile');
 const StudentProfile = require('../Models/StudentProfile');
+const interestedSessions = require('../Models/InterestedSessions');
+const FirebaseToken = require('../Models/FirebaseToken');
 const date = Date.now();
+var admin = require("firebase-admin");
+
+const sendPushNotification = (message)  => {
+    admin.messaging().send(message)
+    .then((response) => {
+        console.log('successfully sent', response);
+    })
+    .catch((error) => {
+        console.log('error sending message:', error)
+    })
+}
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -23,7 +36,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const fetchuser = require('../Middlewares/fetchuser');
-const interestedSessions = require('../Models/InterestedSessions');
 
 router.post('/CreateLiveSession', fetchuser, upload.single('featured_image'), async (req, res) => {  
 
@@ -70,10 +82,6 @@ router.put('/UpdateLiveSession/:key', fetchuser, upload.single('featured_image')
 
     let success = false;
 
-    if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No file uploaded' });
-    }
-
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
     const key = req.params.key; 
@@ -85,18 +93,18 @@ router.put('/UpdateLiveSession/:key', fetchuser, upload.single('featured_image')
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const uniqueFilename = `${Date.now()}_${req.file.originalname}`;
-
         const session = await LiveSessions.findOne({ _id: new ObjectId(key) });
 
         if (!session) {
             return res.status(404).json({ success, error: "Session not found" });
         }
-
         const combinedDateTime = new Date(`${req.body.date}T${req.body.time}Z`);
         session.day = new Date(combinedDateTime);
         session.title = req.body.title;
-        session.featured_image = `Uploads/SessionImages/${uniqueFilename}`,
+        if(req.file){
+            const uniqueFilename = `${date}_${req.file.originalname}`;
+            session.featured_image = `Uploads/SessionImages/${uniqueFilename}`
+        }
 
         await session.save();
 
@@ -176,7 +184,7 @@ router.delete('/DeleteLiveSession/:key', fetchuser, async (req, res) => {
     }
 });
 
-router.get('/GetAllUpcomingSessions', fetchuser, async (req, res) => {
+router.get('/GetAllLiveSessions', fetchuser, async (req, res) => {
     let success = false;
     const person_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
@@ -209,33 +217,22 @@ router.get('/GetAllUpcomingSessions', fetchuser, async (req, res) => {
                 const teacher = await User.findOne({ _id : new ObjectId(teacherId) });
                 const teacherName = teacher.first_name + " " + teacher.last_name;
 
-                const currentDate = new Date();
-
                 const liveSessionsByTeacher = await LiveSessions.find({ 
                     $and: [
                         { teacher_id : new ObjectId(teacherId) },
-                        { day: { $gt: currentDate } }
+                        { status : "Todo" }
                     ]
                  });
 
                  for (const liveSession of liveSessionsByTeacher){
-                    
-                    var interested = false;
-                    const interestedSession = await interestedSessions.findOne({ student_id : new ObjectId(person_id), session_id : new ObjectId(liveSession._id) });
-                    
-                    if(interestedSession){
-                        interested = true;
-                    }
-                    
+
                     liveSessionsInfo.push({
-                        id: liveSession._id,
                         liveSessionTitle: liveSession.title,
                         liveSessionImage: liveSession.featured_image,
-                        liveSessionTeacher: teacherName,
-                        interested: interested
+                        liveSessionTeacher: teacherName
                     });
 
-                }
+                 }
             }
             success = true;
             if(liveSessionsInfo.length == 0){
@@ -253,35 +250,6 @@ router.get('/GetAllUpcomingSessions', fetchuser, async (req, res) => {
     }
 });
 
-router.post('/AddInterestedSession', fetchuser, async (req, res) => {  
-
-    let success = false;
-    const student_profile_id = req.user.id;
-    const session_id = req.body.session_id;
-    const ObjectId = mongoose.Types.ObjectId;
-
-    try {
-        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
-
-        if (!studentProfile) {
-            return res.status(400).json({ success, error: "Student profile not found" });
-        }
-
-        const interestedSession = await interestedSessions.create({
-            student_id: new ObjectId(student_profile_id),
-            session_id : session_id,
-        });
-        
-        success = true;
-        res.json({ success, interestedSession })
-    } 
-    
-    catch (error) {
-        console.error(error.message);
-        res.status(500).send("Some error occurred while creating interested session");
-    }
-});
-
 router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
     let success = false;
     const person_id = req.user.id;
@@ -293,28 +261,32 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        // const privilegeCodeOfFollow = await Codes.findOne({ code: 'Follow' });
+        const privilegeCodeOfFollow = await Codes.findOne({ code: 'Follow' });
 
-        // const followedTeachers = await SocialHub.find({
-        //     $and: [
-        //         { person_2_id: new ObjectId(person_id) },
-        //         { relationship_id: privilegeCodeOfFollow._id }
-        //     ]
-        // })
+        const followedTeachers = await SocialHub.find({
+            $and: [
+                { person_2_id: new ObjectId(person_id) },
+                { relationship_id: privilegeCodeOfFollow._id }
+            ]
+        })
 
-        // if(followedTeachers.length == 0){
-        //     success = true
-        //     return res.status(200).json({ success, message: "No live sessions 1" });
-        // }
-        // else{
+        if(followedTeachers.length == 0){
+            success = true
+            return res.status(200).json({ success, message: "No live sessions 1" });
+        }
+        else{
             let liveSessionsInfo = [];
 
-            // for (const followedTeacher of followedTeachers) {
+            for (const followedTeacher of followedTeachers) {
 
+                const teacherId = followedTeacher.person_1_id;
+                const teacher = await User.findOne({ _id : new ObjectId(teacherId) });
+                const teacherName = teacher.first_name + " " + teacher.last_name;
 
                 const liveSessionsByTeacher = await LiveSessions.find({ 
                     $and: [
-                        { status : "Todo" }
+                        { teacher_id : new ObjectId(teacherId) },
+                        { status : "Live" }
                     ]
                  });
 
@@ -325,10 +297,11 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
                         meetingId: liveSession.meeting_id,
                         liveSessionTitle: liveSession.title,
                         liveSessionImage: liveSession.featured_image,
+                        liveSessionTeacher: teacherName,
                     });
 
                  }
-            // }
+            }
             success = true;
             if(liveSessionsInfo.length == 0){
                 return res.json({ success, message: "No live sessions" });
@@ -336,7 +309,7 @@ router.get('/GetAllCurrentLiveSessions', fetchuser, async (req, res) => {
             else{
                 return res.json({ success, liveSessions: liveSessionsInfo });
             }
-        // }
+        }
     }
 
     catch (error) {
@@ -401,7 +374,9 @@ router.get('/GetMyLiveSession', fetchuser, async (req, res) => {
                 },
                 { post_status : "Published" }
             ]
-        });
+        }).sort()
+        .lean()
+        .exec();;
 
         success = true;
         if(liveSessionsByTeacher.length == 0){
@@ -415,6 +390,148 @@ router.get('/GetMyLiveSession', fetchuser, async (req, res) => {
     catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while fetching live sessions");
+    }
+});
+
+router.get('/GetAllUpcomingSessions', fetchuser, async (req, res) => {
+    let success = false;
+    const person_id = req.user.id;
+    const ObjectId = mongoose.Types.ObjectId;
+
+    try{
+        const studentProfile = await StudentProfile.findOne({ student_profile_id : new ObjectId(person_id) });
+        if (!studentProfile) {
+            return res.status(400).json({ success, error: "Student profile not found" });
+        }
+
+        const privilegeCodeOfFollow = await Codes.findOne({ code: 'Follow' });
+
+        const followedTeachers = await SocialHub.find({
+            $and: [
+                { person_2_id: new ObjectId(person_id) },
+                { relationship_id: privilegeCodeOfFollow._id }
+            ]
+        })
+
+        if(followedTeachers.length == 0){
+            success = true
+            return res.status(200).json({ success, message: "No upcoming sessions" });
+        }
+        else{
+            let liveSessionsInfo = [];
+
+            for (const followedTeacher of followedTeachers) {
+
+                const teacherId = followedTeacher.person_1_id;
+                const teacher = await User.findOne({ _id : new ObjectId(teacherId) });
+                const teacherName = teacher.first_name + " " + teacher.last_name;
+
+                const currentDate = new Date();
+
+                const liveSessionsByTeacher = await LiveSessions.find({ 
+                    $and: [
+                        { teacher_id : new ObjectId(teacherId) },
+                        { day: { $gt: currentDate } }
+                    ]
+                 });
+
+                 for (const liveSession of liveSessionsByTeacher){
+
+                    var interested = false;
+
+                    // const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+                    // const timeOptions = { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Asia/Karachi' };
+
+                    // const date = new Date(liveSession.day).toLocaleDateString('en-US', dateOptions);
+                    // const time = new Date(liveSession.day).toLocaleTimeString('en-US', timeOptions);
+
+                    const interestedSession = await interestedSessions.findOne({ student_id : new ObjectId(person_id), session_id : new ObjectId(liveSession._id) });
+                    
+                    if(interestedSession){
+                        interested = true;
+                    }
+                    
+                    liveSessionsInfo.push({
+                        id: liveSession._id,
+                        liveSessionTitle: liveSession.title,
+                        liveSessionImage: liveSession.featured_image,
+                        liveSessionTeacher: teacherName,
+                        interested: interested,
+                        day: liveSession.day
+                    });
+
+                }
+            }
+            success = true;
+            if(liveSessionsInfo.length == 0){
+                return res.json({ success, message: "No upcoming sessions" });
+            }
+            else{
+                return res.json({ success, liveSessions: liveSessionsInfo });
+            }
+        }
+    }
+
+    catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred while fetching live sessions");
+    }
+});
+
+router.post('/AddInterestedSession', fetchuser, async (req, res) => {  
+
+    let success = false;
+    const student_profile_id = req.user.id;
+    const session_id = req.body.session_id;
+    const ObjectId = mongoose.Types.ObjectId;
+
+    try {
+        const studentProfile = await StudentProfile.findOne({ student_profile_id: new ObjectId(student_profile_id)});
+
+        if (!studentProfile) {
+            return res.status(400).json({ success, error: "Student profile not found" });
+        }
+
+        const interestedSession = await interestedSessions.create({
+            student_id: new ObjectId(student_profile_id),
+            session_id : session_id,
+        });
+        
+        const session = await LiveSessions.findOne({ _id: new ObjectId(session_id) });
+        const token = await FirebaseToken.findOne({ user_id: new ObjectId(student_profile_id)});
+        const redirect = 'MySessions';
+
+        if (token) {
+            const message = {
+                notification: {
+                    title: 'Live Session Reminder',
+                    body: 'Reminder!! You showed interest in live session " ' + session.title + ' " which has been scheduled in an hour'
+                },
+                data: {
+                    redirect: redirect
+                },
+                token: token.token
+            }
+    
+            const datee = session.day
+            const schedule = require('node-schedule');
+            var jobId = student_profile_id + '_' + datee;  
+
+            datee.setUTCHours(datee.getUTCHours() - 1);
+
+            schedule.scheduleJob(jobId, datee,function(){
+                schedule.cancelJob(jobId);
+                sendPushNotification(message);
+            });
+        }
+
+        success = true;
+        res.json({ success, interestedSession })
+    } 
+    
+    catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred while creating interested session");
     }
 });
 

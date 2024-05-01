@@ -6,13 +6,27 @@ const User = require('../Models/User');
 const Lessons = require('../Models/Lessons');
 const Courses = require('../Models/Courses');
 const Orders = require('../Models/Orders');
+const LearningPosts = require('../Models/LearningPosts');
+const User = require('../Models/User');
 const UserItems = require('../Models/UserItems');
 const LessonItems = require('../Models/LessonItems');
 const OrderCourses = require('../Models/OrderCourses');
 const Hirer = require('../Models/Hirer');
 const TeacherBid = require('../Models/TeacherBid');
+const Notifications = require('../Models/Notifications');
 const fetchuser = require('../Middlewares/fetchuser');
+const FirebaseToken = require('../Models/FirebaseToken');
+var admin = require("firebase-admin");
 
+const sendPushNotification = (message)  => {
+    admin.messaging().send(message)
+    .then((response) => {
+        console.log('successfully sent', response);
+    })
+    .catch((error) => {
+        console.log('error sending message:', error)
+    })
+}
 
 router.get('/GetOrders', fetchuser, async (req, res) => {
     let success = false;
@@ -124,10 +138,16 @@ router.post('/MarkAsPaid', fetchuser, async (req, res) => {
         await order.save();
 
         const student_id = order.student_id;
+        const student = await User.findOne({ _id: new ObjectId(student_id) });
+        const student_name = student.first_name;
 
         if(order.purpose == 'course'){
             const order_course = await OrderCourses.findOne({ order_id: new ObjectId(order_id) });
             const course = await Courses.findOne({ _id: new ObjectId(order_course.course_id) });
+            const post = await LearningPosts.findOne({ _id: new ObjectId(course.post_id) });
+            const teacher_id = post.author_user_id;
+            const teacher = await User.findOne({ _id: new ObjectId(teacher_id) });
+            const teacher_name = teacher.first_name;
 
             await UserItems.create({
                 student_id: student_id,
@@ -145,13 +165,94 @@ router.post('/MarkAsPaid', fetchuser, async (req, res) => {
                 item_type: 'topic',
                 status: 'in progress'
             });
+
+            const stoken = await FirebaseToken.findOne({ user_id: new ObjectId(student_id)});
+            const redirect = 'MyCourses';
+
+            if (stoken) {
+                const message = {
+                    notification: {
+                        title: 'Course Payment Approved',
+                        body: `Hi ${student_name}! Access to your course: ${post.title} has been unlocked.`
+                    },
+                    data: {
+                        redirect: redirect
+                    },
+                    token: stoken.token
+                }
+
+                await Notifications.create({
+                    user_id: new ObjectId(student_id),
+                    message : `Hi ${student_name}! Access to your course: ${post.title} has been unlocked.`,
+                    redirect: redirect,
+                    createdAt: new Date(),
+                    read: false
+                });
+
+                sendPushNotification(message);
+            }
+
+            const token = await FirebaseToken.findOne({ user_id: new ObjectId(teacher_id)});
+            const tredirect = 'TeacherAdminTools';
+
+            if (token) {
+                const message = {
+                    notification: {
+                        title: 'New Student Enrollment',
+                        body: `Hi ${teacher_name}! Payment has been transferred to your account on new student enrollment in your course: ${post.title}`
+                    },
+                    data: {
+                        redirect: tredirect
+                    },
+                    token: token.token
+                }
+
+                await Notifications.create({
+                    user_id: new ObjectId(teacher_id),
+                    message : `Hi ${teacher_name}! Payment has been transferred to your account on new student enrollment in your course: ${post.title}`,
+                    redirect: tredirect,
+                    createdAt: new Date(),
+                    read: false
+                });
+
+                sendPushNotification(message);
+            }
         }
 
         else {
             const hirer = await Hirer.findOne({ order_id: new ObjectId(order_id) });
+            const teacher_id = hirer._id;
+            const teacher = await User.findOne({ _id: new ObjectId(teacher_id) });
+            const teacher_name = teacher.first_name;
             const bid = await TeacherBid.findOne({ topic_id: new ObjectId(hirer.topic_id) });
             bid.status = 'Active';
             await bid.save();
+
+            const token = await FirebaseToken.findOne({ user_id: new ObjectId(teacher_id)});
+            const tredirect = 'MyActiveProposalsT';
+
+            if (token) {
+                const message = {
+                    notification: {
+                        title: 'Proposal Accepted',
+                        body: `Hi ${teacher_name}! Student : ${student_name} has accepted your proposal.`
+                    },
+                    data: {
+                        redirect: tredirect
+                    },
+                    token: token.token
+                }
+
+                await Notifications.create({
+                    user_id: new ObjectId(teacher_id),
+                    message : `Hi ${teacher_name}! Student : ${student_name} has accepted your proposal.`,
+                    redirect: tredirect,
+                    createdAt: new Date(),
+                    read: false
+                });
+
+                sendPushNotification(message);
+            }
         }
 
         success = true;

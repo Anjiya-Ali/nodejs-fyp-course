@@ -55,12 +55,20 @@ router.post('/CreateCourse', fetchuser, upload.single('featured_image'), async (
 
         //creation of course
 
+        let categoryArray;
+
+        if (req.body.categories.includes(',')) {
+            categoryArray = req.body.categories.split(',');
+        } else {
+            categoryArray = [req.body.categories];
+        }
+
         const course = await Courses.create({
             language : req.body.language,
             fees : req.body.charges,
             duration : req.body.duration,
             post_id : learning_post.id,
-            categories: JSON.stringify(req.body.categories)
+            categories: JSON.stringify(categoryArray)
         });
 
         const data = {
@@ -125,10 +133,6 @@ router.put('/UpdateCourse/:key', fetchuser, upload.single('featured_image'), asy
 
     let success = false;
 
-    if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No file uploaded' });
-    }
-
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
     const key = req.params.key; 
@@ -140,8 +144,6 @@ router.put('/UpdateCourse/:key', fetchuser, upload.single('featured_image'), asy
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
-
-        const uniqueFilename = `${date}_${req.file.originalname}`;
 
         const course = await Courses.findOne({ _id: new ObjectId(key) });
 
@@ -161,7 +163,11 @@ router.put('/UpdateCourse/:key', fetchuser, upload.single('featured_image'), asy
 
         post.title = title;
         post.content = description;
-        post.featured_image = `Uploads/CourseImages/${uniqueFilename}`,
+
+        if (req.file) {
+            const uniqueFilename = `${date}_${req.file.originalname}`;
+            post.featured_image = `Uploads/CourseImages/${uniqueFilename}`;
+        }
 
         await post.save();
 
@@ -213,7 +219,6 @@ router.delete('/DeleteCourse/:key', fetchuser, async (req, res) => {
 });
 
 //Get All Courses
-
 router.get('/GetCourses', fetchuser, async (req, res) => {
     let success = false;
     const teacher_profile_id = req.user.id;
@@ -248,7 +253,8 @@ router.get('/GetCourses', fetchuser, async (req, res) => {
                     post_date: matchingLearningPost.post_date,
                 } : null;
             })
-            .filter(course => course !== null); // Remove null entries
+            .filter(course => course !== null) // Remove null entries
+            .sort((a, b) => new Date(b.post_date) - new Date(a.post_date)); // Sort by post_date in descending order
 
         res.json({ success, coursesWithLearningPosts });
 

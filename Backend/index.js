@@ -12,6 +12,16 @@ var cors = require('cors')
 
 connectToMongo();
 
+var admin = require("firebase-admin");
+
+const pathToServiceAccount = path.resolve('service-key.json');
+var serviceAccount = require(pathToServiceAccount);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://push-notification-177f8-default-rtdb.firebaseio.com"
+});
+
 app.use(express.json())
 app.use(cors())
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -37,7 +47,8 @@ app.use('/api/JointAccount',require('./Routes/JointAccount'))
 app.use('/api/Admin',require('./Routes/Admin'))
 app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
 app.use('/api/Notifications',require('./Routes/Notifications'))
+app.use('/api/FirebaseToken',require('./Routes/FirebaseToken'))
 
-app.listen(port, '172.16.91.20',() => {
+app.listen(port, '192.168.0.147',() => {
   console.log(`Example app listening on port ${port}`)
 })

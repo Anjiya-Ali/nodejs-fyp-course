@@ -142,27 +142,20 @@ router.put('/UpdateTopicStatus/:key', fetchuser, async (req, res) => {
 
 //Update Topic
 
-router.put('/UpdateTopic/:key', fetchuser, upload, async (req, res) => {  
-
+router.put('/UpdateTopic/:key', fetchuser, upload, async (req, res) => {
     let success = false;
-
-    if (!req.file) {
-        return res.status(400).json({ success: false, error: 'No file uploaded' });
-    }
 
     const teacher_profile_id = req.user.id;
     const ObjectId = mongoose.Types.ObjectId;
-    const key = req.params.key; 
-    const { title } = req.body; 
+    const key = req.params.key;
+    const { title } = req.body;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id)});
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id: new ObjectId(teacher_profile_id) });
 
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
-
-        const uniqueFilename = `${date}_${req.file.originalname}`;
 
         const topic = await LearningPosts.findOne({ _id: new ObjectId(key) });
 
@@ -170,16 +163,21 @@ router.put('/UpdateTopic/:key', fetchuser, upload, async (req, res) => {
             return res.status(404).json({ success, error: "Topic not found" });
         }
 
+        // Check if a file is uploaded
+        if (req.file) {
+            // If a file is uploaded, update the content field
+            const uniqueFilename = `${date}_${req.file.originalname}`;
+            topic.content = `Uploads/TopicVideos/${uniqueFilename}`;
+        }
+
+        // Always update the title field
         topic.title = title;
-        topic.content = `Uploads/TopicVideos/${uniqueFilename}`;
 
         await topic.save();
 
         success = true;
         res.json({ success, topic });
-    } 
-    
-    catch (error) {
+    } catch (error) {
         console.error(error.message);
         res.status(500).send("Some error occurred while editing the topic");
     }
