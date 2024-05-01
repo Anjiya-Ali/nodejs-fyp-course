@@ -7,19 +7,31 @@ const commentsSchema = new Schema({
     ref: 'Posts',
     required: true
   },
+  commentor_id:{
+    type:String,
+    required:true
+  },
+  commentor_name:{
+    type:String,
+    required:true
+  },
   description: {
     type: String,
     required: true,
-    minLength:5
+    minLength: 1
   },
-  replies: {
-    type: Object,
-    required: true
+  parent_comment: {
+    type: String,
+    required: false,
+  },
+  like_members: {
+    type: [String],
+    required: false
   },
   total_likes: {
     type: Number,
     required: true,
-    default:0
+    default: 0
   }
 })
 

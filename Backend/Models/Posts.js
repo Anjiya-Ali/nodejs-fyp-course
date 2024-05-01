@@ -6,25 +6,29 @@ const postsSchema = new Schema({
     description: {
         type: String,
         required: true,
-        minLength:5
+        minLength: 5
     },
     file_attachments: {
         type: [String],
-        required: true,
+        required: false,
     },
     total_likes: {
         type: Number,
         required: true,
-        default:0
+        default: 0
     },
-    total_comments:{
+    like_members: {
+        type: [String],
+        required: false
+    },
+    total_comments: {
         type: Object,
         required: false
     },
     date: {
         type: Date,
         required: true,
-        default:Date.now
+        default: Date.now
     },
 });
 

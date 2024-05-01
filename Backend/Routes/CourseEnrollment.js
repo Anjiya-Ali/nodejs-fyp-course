@@ -6,6 +6,8 @@ const LearningPosts = require('../Models/LearningPosts');
 const Courses = require('../Models/Courses');
 const Orders = require('../Models/Orders');
 const OrderCourses = require('../Models/OrderCourses');
+const Users = require('../Models/User');
+const TeacherProfile = require('../Models/TeacherProfile');
 const fetchuser = require('../Middlewares/fetchuser');
 
 function calculateRating(course) {
@@ -204,7 +206,7 @@ router.get('/GetPendingOrders', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
 
-        const orders = await Orders.find({student_id: new ObjectId(student_profile_id), payment_status: 'pending', purpose: 'course'}).lean().exec();
+        const orders = await Orders.find({student_id: new ObjectId(student_profile_id), payment_status: 'pending'}).lean().exec();
 
         success = true;
         res.json({ success, orders });
@@ -239,6 +241,90 @@ router.get('/GetSinglePendingOrder/:key', fetchuser, async (req, res) => {
     } catch (error) {
         console.error(error.message);
         res.status(500).send("An error occurred while fetching single pending order.");
+    }
+});
+
+router.post('/getAllCourses', async (req, res) => {
+    let success = false;
+
+    try {
+        const { categories } = req.body;
+        const lPosts = await LearningPosts.find({
+            status: 'published',
+            post_type: 'course'
+        });
+
+        const coursesArr = await Courses.find();
+        let courses = []
+        if (categories.length > 0) {
+            coursesArr.forEach(course => {
+                const categoriesArray = JSON.parse(course.categories);
+                if (categoriesArray.some(category => categories.includes(category))) {
+                    courses.push(course);
+                }
+            });
+        }
+        else{
+            courses=coursesArr
+        }
+        const matchedObjects = [];
+
+        for (const lPost of lPosts) {
+            const matchedCourse = courses.find(course => course.post_id.toString() == lPost._id.toString());
+
+            if (matchedCourse) {
+                const author = await Users.findById(lPost.author_user_id).select("first_name last_name");
+                const teacherPic = await TeacherProfile.findOne({ teacher_profile_id: lPost.author_user_id }).select("profile_picture");
+
+                const matchedObject = {
+                    course_id: matchedCourse._id,
+                    learningPost_id: matchedCourse.post_id,
+                    content: lPost.content,
+                    title: lPost.title,
+                    featured_image: lPost.featured_image,
+                    author_user_id: lPost.author_user_id,
+                    authorName: author.first_name + ' ' + author.last_name,
+                    authorProfilePicture: teacherPic.profile_picture,
+                    fees: matchedCourse.fees
+
+                };
+                matchedObjects.push(matchedObject);
+            }
+        }
+
+        success = true;
+        res.json({ success, courses: matchedObjects });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("An error occurred while fetching all courses");
+    }
+});
+
+router.get('/getAllCategories', async (req, res) => {
+    let success = false;
+
+    try {
+        const courses = await Courses.find().select("categories");
+        const uniqueElements = new Set();
+
+        courses.forEach(course => {
+            const categoriesArray = JSON.parse(course.categories);
+
+            // Loop through each element in the categories array
+            categoriesArray.forEach(category => {
+                // Add the category to the Set
+                uniqueElements.add(category);
+            });
+        });
+        const newArray = [...uniqueElements];
+
+        success = true;
+        res.json({ success, categories: newArray });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send("An error occurred while fetching all categories");
     }
 });
 

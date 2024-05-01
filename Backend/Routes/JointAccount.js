@@ -4,6 +4,7 @@ const User = require('../Models/User');
 const TeacherProfile = require('../Models/TeacherProfile');
 const Codes = require('../Models/Codes');
 const Courses = require('../Models/Courses');
+const LearningPosts = require('../Models/LearningPosts');
 const SocialHub = require('../Models/SocialHub');
 const JointAccounts = require('../Models/JointAccounts');
 const mongoose=require('mongoose');
@@ -132,10 +133,10 @@ router.get('/getCourseById/:courseId', fetchuser, async (req, res) => {
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
 
-        const course = await Courses.findOne({ post_id : new ObjectId(courseId) });
+        const courseFinal = await LearningPosts.findOne({ _id: new ObjectId(courseId) });
 
         success = true;
-        res.json({ success, course });
+        res.json({ success, courseFinal });
     }
 
     catch (error) {
@@ -301,11 +302,13 @@ router.get('/ViewJointAccountRequests', fetchuser, async (req, res) => {
 
                 const course = await Courses.findOne({ post_id: new ObjectId(request.course_id) });
 
+                const courseFinal = await LearningPosts.findOne({ _id: new ObjectId(request.course_id) });
+
                 jointAccountRequestsInfo.push({
                     jointAccountRequestId: request._id,
                     id: request.inviting_teacher_id,
                     courseId: request.course_id,
-                    courseName: course.name,
+                    courseName: courseFinal.title,
                     name: user.first_name + " " + user.last_name,
                     profile_picture: mem.profile_picture
                 });
@@ -379,8 +382,10 @@ router.get('/ViewDetailsOfJoinAccountRequest/:jointAccountRequestId', fetchuser,
 
             const user = await User.findOne({ _id: new ObjectId(jointAccountRequests.inviting_teacher_id) });
 
+            const courseFinal = await LearningPosts.findOne({ _id: new ObjectId(jointAccountRequests.course_id) });
+
             jointAccountRequestDetail = {
-                courseName: course.name,
+                courseName: courseFinal.title,
                 message: jointAccountRequests.invitation_message,
                 jointAccountRequestId: jointAccountRequests._id,
                 name: user.first_name + " " + user.last_name,

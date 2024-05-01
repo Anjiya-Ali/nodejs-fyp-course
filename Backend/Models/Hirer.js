@@ -13,11 +13,15 @@ const hirerSchema = new Schema({
     ref: 'BidTopic',
     required: true
   },
+  order_id: {
+    type: Schema.Types.ObjectId,
+    ref: 'Orders',
+    required: true
+  },
   status: {
     type: String,
-    required: true,
-    minLength:3
-  }
+    required: true
+  },
 })
 
 const hirer = mongoose.model('Hirer', hirerSchema);

@@ -18,14 +18,14 @@ const bidTopicSchema = new Schema({
     minLength:5
   },
   skills_required: {
-    type: [String],
+    type: String,
     required: true
   },
   rate_per_hour: {
     type: Number,
     required: true
   },
-  estimated_hour: {
+  estimated_hours: {
     type: Number,
     required: true
   },
@@ -39,11 +39,7 @@ const bidTopicSchema = new Schema({
     required: true,
     default: Date.now
   },
-  closing_date: {
-    type: Date,
-    required: false
-  },
-  langauge: {
+  language: {
     type: String,
     required: true,
     minLength:3

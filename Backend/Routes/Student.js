@@ -7,6 +7,7 @@ const Codes = require('../Models/Codes');
 const SocialHub = require('../Models/SocialHub');
 const mongoose=require('mongoose');
 const crypto = require('crypto');
+const Hirer = require('../Models/Hirer');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
@@ -148,7 +149,7 @@ router.get('/ProfilePicture', fetchuser, async(req, res) => {
 
 //FEEDBACK
 
-router.post('/AddFeedback/:student_profile_id', fetchuser, [                                                    //Both Adding and Updating Feedback
+router.post('/AddFeedback/:student_profile_id/:topic_request_id', fetchuser, [                                                    //Both Adding and Updating Feedback
     body('feedback', 'Enter a valid feedback').isString().isIn(['1', '2', '3', '4', '5'])
 ], async (req, res) => {
 
@@ -160,12 +161,13 @@ router.post('/AddFeedback/:student_profile_id', fetchuser, [                    
     }
 
     const userId = req.user.id;
-    const student_profile_id = req.params.id
+    const student_profile_id = req.params.student_profile_id
+    const topic_request_id = req.params.topic_request_id
     const { feedback } = req.body;
     const ObjectId = mongoose.Types.ObjectId;
 
     try {
-        const teacherProfile = await TeacherProfile.findOne({ _id : new ObjectId(userId) });
+        const teacherProfile = await TeacherProfile.findOne({ teacher_profile_id : new ObjectId(userId) });
         if (!teacherProfile) {
             return res.status(400).json({ success, error: "Teacher profile not found" });
         }
@@ -181,6 +183,10 @@ router.post('/AddFeedback/:student_profile_id', fetchuser, [                    
 
         studentProfile.feedback = newFeedback;
         await studentProfile.save();
+
+        const hirer = await Hirer.findOne({ topic_id: new ObjectId(topic_request_id) })
+        hirer.status = "Given";
+        await hirer.save()
 
         success = true;
         res.json({ success, message: "Feedback added successfully" });
@@ -271,6 +277,12 @@ router.post('/AddInterests', fetchuser, [], async (req, res) => {               
         const description = req.body.description;
 
         const currentInterests = studentProfile.interests ? JSON.parse(studentProfile.interests) : [];
+
+        const interestExists = currentInterests.some(interest => interest.title === title);
+
+        if (interestExists) {
+            return res.json({ success, error: "Interest with this name already exists" });
+        }
 
         var key = generateUniqueRandomNumber();
 
@@ -408,6 +420,12 @@ router.put('/EditInterest/:key', fetchuser, async (req, res) => {
         }
 
         let interests = studentProfile.interests ? JSON.parse(studentProfile.interests) : [];
+
+        const interestExists = interests.some(interest => interest.title === title);
+
+        if (interestExists) {
+            return res.json({ success, error: "Interest with this name already exists" });
+        }
 
         const interestIndex = interests.findIndex(interest => interest.id === key);
 
@@ -950,6 +968,7 @@ router.get('/GetProfilePicture', fetchuser, async (req, res) => {
             return res.status(404).json({ success: false, error: 'Profile picture not found' });
         }
 
+        // Send the profile picture URL in the response
         res.json({ success: true, profilePictureUrl });
     } catch (error) {
         console.error(error.message);
@@ -969,8 +988,6 @@ router.get('/GetProfile', fetchuser, async (req, res) => {
         if (!studentProfile) {
             return res.status(400).json({ success, error: "Student profile not found" });
         }
-
-        let feedback = 0;
 
         if(studentProfile.feedback){
             //feedback

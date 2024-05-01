@@ -150,7 +150,7 @@ router.get('/ProfilePicture', fetchuser, async(req, res) => {
 
 router.post('/AddFeedback/:teacher_profile_id', fetchuser, [                                                    //Both Adding and Updating Feedback
     body('feedback', 'Enter a valid feedback').isString().isIn(['1', '2', '3', '4', '5']),
-    body('feedback_text', 'Enter a valid feedback text').isString().isLength({ min: 5 }),
+    body('feedback_text', 'Enter a valid feedback text').isString(),
 ], async (req, res) => {
 
     let success = false;
@@ -1811,6 +1811,38 @@ router.get('/GetProfilePicture', fetchuser, async (req, res) => {
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Some error occurred while fetching profile picture');
+    }
+});
+
+router.get('/getAll', fetchuser, async (req, res) => { //For Both Adding and Updaing Profile Picture
+
+    try {
+        const teachers = await TeacherProfile.find();
+        var teacherUser = [];
+
+        for (var i = 0; i < teachers.length; i++) {
+            const user = await User.findById(teachers[i].teacher_profile_id).select("first_name last_name email dob gender country RegisteringDate status");
+            const mergedObject = { ...user.toObject(), ...teachers[i].toObject() }; // Merge both objects
+            teacherUser.push(mergedObject);
+        }
+        teacherUser.sort((a, b) => {
+            const nameA = a.first_name.toUpperCase();
+            const nameB = b.first_name.toUpperCase();
+
+            if (nameA < nameB) {
+                return -1;
+            }
+            if (nameA > nameB) {
+                return 1;
+            }
+            return 0;
+        });
+        res.json({ success: true, teachers: teacherUser });
+    }
+
+    catch (error) {
+        console.error(error.message);
+        res.status(500).send("Some error occurred while returning all teachers information");
     }
 });
 

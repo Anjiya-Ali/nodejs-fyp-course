@@ -3,6 +3,11 @@ const connectToMongo=require('./Models/Db')
 const crypto = require('crypto');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fetchuser = require('./Middlewares/fetchuser');
+const checkCommunityMember = require('./Middlewares/checkCommunityMember');
+const checkCommunity = require('./Middlewares/checkCommunity');
+const checkCommunityPost = require('./Middlewares/checkCommunityPost');
+const checkNotCommunityPost = require('./Middlewares/checkNotCommunityPost');
 
 const secret = crypto.randomBytes(32).toString('hex');
 
@@ -48,7 +53,15 @@ app.use('/api/Admin',require('./Routes/Admin'))
 app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
 app.use('/api/Notifications',require('./Routes/Notifications'))
 app.use('/api/FirebaseToken',require('./Routes/FirebaseToken'))
-
+app.use('/api/StudentTopicRequests',require('./Routes/StudentTopicRequests'))
+app.use('/api/TeacherTopicRequests',require('./Routes/TeacherTopicRequests'))
+app.use('/api/Payment',require('./Routes/Payment'))
+app.use('/api/Community/getOne/:communityId/Post/:postId/Comment', fetchuser, checkCommunity, checkCommunityMember, checkCommunityPost, require('./Routes/CommentsCommunityPosts'));
+app.use('/api/Community/getOne/:communityId/Post', fetchuser, checkCommunity, checkCommunityMember, require('./Routes/CommunityPosts'))
+app.use('/api/Community', require('./Routes/Community'))
+app.use('/api/Post/:postId/Comment', fetchuser, checkNotCommunityPost, require('./Routes/CommentsPosts'))
+app.use('/api/Post', fetchuser, require('./Routes/Posts'))
+app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
 app.listen(port, '192.168.0.147',() => {
   console.log(`Example app listening on port ${port}`)
 })

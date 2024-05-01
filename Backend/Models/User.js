@@ -41,7 +41,15 @@ const userSchema = new Schema({
         type: String,
         required: true,
         minLength:3
-    }
+    },
+    RegisteringDate: {
+        type: Date,
+        required: true
+    },
+    status: {
+        type: String,
+        required: true
+    },
 });
 
 const User = mongoose.model('User', userSchema);

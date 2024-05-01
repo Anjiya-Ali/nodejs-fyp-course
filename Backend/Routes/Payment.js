@@ -7,7 +7,6 @@ const Lessons = require('../Models/Lessons');
 const Courses = require('../Models/Courses');
 const Orders = require('../Models/Orders');
 const LearningPosts = require('../Models/LearningPosts');
-const User = require('../Models/User');
 const UserItems = require('../Models/UserItems');
 const LessonItems = require('../Models/LessonItems');
 const OrderCourses = require('../Models/OrderCourses');
