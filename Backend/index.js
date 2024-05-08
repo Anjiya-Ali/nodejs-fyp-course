@@ -62,6 +62,7 @@ app.use('/api/Community', require('./Routes/Community'))
 app.use('/api/Post/:postId/Comment', fetchuser, checkNotCommunityPost, require('./Routes/CommentsPosts'))
 app.use('/api/Post', fetchuser, require('./Routes/Posts'))
 app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
-app.listen(port, '192.168.0.147',() => {
-  console.log(`Example app listening on port ${port}`)
-})
+
+app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
+});
