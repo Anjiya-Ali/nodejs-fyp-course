@@ -11,9 +11,11 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
+    cd Backend
     npm install --legacy-peer-deps
   displayName: 'npm install'
 
 - script: |
+    cd Backend
     npm run start
   displayName: 'npm start'
