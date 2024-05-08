@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const mongooseURI = 'mongodb://127.0.0.1:27017/Learnlance?&directConnection=true';
+const mongooseURI = 'mongodb+srv://anjiya:helloworld@cluster0.rq0tmnn.mongodb.net/Learnlance?retryWrites=true&w=majority&appName=Cluster0';
 
 const connectToMongo = async () => {
   try {
