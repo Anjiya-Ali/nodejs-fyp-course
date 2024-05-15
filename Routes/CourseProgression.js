@@ -87,8 +87,9 @@ router.get('/GetMyCourses', fetchuser, async (req, res) => {
             _id: { $in: courses.map(course => course.post_id) }
         }).lean().exec();
 
+        
         const coursesWithLearningPosts = courses
-            .filter(course => mycourses.some(item => item.item_id.equals(course._id)))
+            .filter(course => mycourses.some(item => item.item_id.equals(course.post_id)))
                 .map(course => {
                 const matchingLearningPost = learningPosts.find(post => post._id.equals(course.post_id));
                     return matchingLearningPost ? {

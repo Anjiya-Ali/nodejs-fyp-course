@@ -245,6 +245,7 @@ router.get('/GetCourses', fetchuser, async (req, res) => {
                     language: course.language,
                     fees: course.fees,
                     duration : course.duration,
+                    post_id: course.post_id,
                     content: matchingLearningPost.content,
                     title: matchingLearningPost.title,
                     featured_image: matchingLearningPost.featured_image,
