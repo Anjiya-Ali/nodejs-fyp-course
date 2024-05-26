@@ -67,6 +67,8 @@ app.use('/api/Post/:postId/Comment', fetchuser, checkNotCommunityPost, require('
 app.use('/api/Post', fetchuser, require('./Routes/Posts'))
 app.use('/api/ScheduledMeetings',require('./Routes/ScheduledMeetings'))
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
     console.log(`Server listening on port ${port}`);
 });
+
+module.exports = {app, server};

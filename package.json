@@ -1,11 +1,12 @@
 {
   "name": "fyp-backend-app",
-    "version": "1.0.0",
-    "scripts": {
-        "start": "node index.js",
-        "build": "node build.js"
-    },
-    "dependencies": {
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js",
+    "build": "node build.js",
+    "test": "jest"
+  },
+  "dependencies": {
     "@stream-io/node-sdk": "^0.1.2",
     "axios": "^1.5.1",
     "bcryptjs": "^2.4.3",
@@ -21,5 +22,9 @@
     "multer": "^1.4.5-lts.1",
     "node-schedule": "^2.1.1",
     "nodemailer": "^6.9.7"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   }
 }
